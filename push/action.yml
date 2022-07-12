@@ -1,0 +1,15 @@
+name: 'sprkl: push'
+description: 'Push sprkl snapshot to CI platform'
+
+inputs:
+  token:
+    description: ""
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+
+    - name: Push
+      shell: bash
+      run: sprkl ci push --token=${{ inputs.token }} --repository=$GITHUB_REPOSITORY --run=$GITHUB_RUN_ID
