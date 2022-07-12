@@ -1,0 +1,47 @@
+name: 'sprkl: setup'
+description: 'Set up sprkl'
+
+inputs:
+  setenv:
+    required: false
+    description: ""
+    default: "true"
+  analyze:
+    required: false
+    description: ""
+    default: "true"
+  version:
+    required: false
+    description: ""
+    default: 0.0.30
+  npm_token:
+    required: true
+    description: ""
+
+runs:
+  using: "composite"
+  steps:
+
+    - name: Install 
+      shell: bash
+      run: npx @sprkl/scripts@$SPRKL_VERSION install
+      env: 
+        SPRKL_NPM_TOKEN: ${{ inputs.npm_token }}
+        SPRKL_VERSION: ${{ inputs.version }}
+
+    - name: Analysis
+      shell: bash
+      run: |
+        if [[ ${{ inputs.analyze }} == true ]]; then 
+          sprkl apply
+        fi
+
+    - name: Set environment
+      shell: bash
+      run: |
+        if [[ ${{ inputs.setenv }} == true ]]; then
+          SPRKL_PREFIX=$(sprkl config get prefix)
+          echo "NODE_OPTIONS=-r @sprkl/sprkl" >> $GITHUB_ENV
+          echo "SPRKL_PREFIX=$SPRKL_PREFIX" >> $GITHUB_ENV
+          echo "NODE_PATH=$SPRKL_PREFIX/lib/node_modules" >> $GITHUB_ENV
+        fi
