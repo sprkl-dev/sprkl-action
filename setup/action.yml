@@ -13,7 +13,7 @@ inputs:
   version:
     required: false
     description: ""
-    default: 0.0.30
+    default: 0.0.31
   npm_token:
     required: true
     description: ""
