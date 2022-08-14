@@ -5,18 +5,15 @@ inputs:
   setenv:
     required: false
     description: ""
-    default: "true"
+    default: "false"
   analyze:
     required: false
     description: ""
-    default: "true"
+    default: "false"
   version:
     required: false
     description: ""
     default: 0.0.32
-  npm_token:
-    required: true
-    description: ""
 
 runs:
   using: "composite"
@@ -26,7 +23,6 @@ runs:
       shell: bash
       run: npx @sprkl/scripts@$SPRKL_VERSION install
       env: 
-        SPRKL_NPM_TOKEN: ${{ inputs.npm_token }}
         SPRKL_VERSION: ${{ inputs.version }}
 
     - name: Analysis
