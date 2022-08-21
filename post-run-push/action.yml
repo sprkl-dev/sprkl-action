@@ -1,0 +1,12 @@
+name: "sprkl: push"
+decription: "Push sprkl snapshot to CI platform at the end of the job"
+
+inputs:
+  token:
+    description: ""
+    required: true
+
+runs:
+  using: "node16"
+  main: build/main.js
+  post: build/post.js
