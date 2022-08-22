@@ -1,10 +1,22 @@
-name: "sprkl: push"
-decription: "Push sprkl snapshot to CI platform at the end of the job"
+name: "sprkl: setup and pusg"
+decription: "Setup sprkl and push sprkl snapshot to CI platform at the end of the job"
 
 inputs:
   token:
     description: ""
     required: true
+  setenv:
+    required: false
+    description: ""
+    default: "false"
+  analyze:
+    required: false
+    description: ""
+    default: "false"
+  version:
+    required: false
+    description: ""
+    default: 0.0.38
 
 runs:
   using: "node16"
