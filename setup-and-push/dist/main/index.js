@@ -3980,15 +3980,22 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(186));
 const exec = __importStar(__nccwpck_require__(514));
+/**
+    Setup sprkl function
+ */
 (() => __awaiter(void 0, void 0, void 0, function* () {
+    // get the input values from the action
     const SPRKL_VERSION = core.getInput('version');
     const ANALYZE = core.getInput('analyze');
     const SET_ENV = core.getInput('setenv');
+    // run sprkl install command
     const InstallCmd = `npx @sprkl/scripts@${SPRKL_VERSION} install`;
     yield exec.exec(InstallCmd);
+    // run sprkl analysis if requested
     if (ANALYZE === 'true') {
         yield exec.exec('sprkl apply');
     }
+    // set sprkl environment if requested
     if (SET_ENV === 'true') {
         const SetEnvCmd = `SPRKL_PREFIX=$(sprkl config get prefix) && 
         "NODE_OPTIONS=-r @sprkl/sprkl" >> $GITHUB_ENV && 

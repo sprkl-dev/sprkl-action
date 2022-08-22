@@ -10795,10 +10795,15 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const exec = __importStar(__nccwpck_require__(1514));
 const github = __importStar(__nccwpck_require__(5438));
+/**
+ Push sprkl state to CI platfrom at the end of the job
+ */
 (() => __awaiter(void 0, void 0, void 0, function* () {
+    // get the input values from the action
     const TOKEN = core.getInput('token');
     const GITHUB_REPOSITORY = `${github.context.repo.owner}/${github.context.repo.repo}`;
     const GITHUB_RUN_ID = github.context.runId;
+    // push sprkl state to CI platfrom
     const sprklPushCmd = `sprkl ci push --token=${TOKEN} --repository=${GITHUB_REPOSITORY} --run=${GITHUB_RUN_ID}`;
     yield exec.exec(sprklPushCmd);
 }))();
