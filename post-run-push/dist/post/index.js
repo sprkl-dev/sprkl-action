@@ -11008,10 +11008,10 @@ __nccwpck_require__.r(__webpack_exports__);
 
 (async () => {
     const TOKEN = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('token');
-    const GITHUB_REPOSITORY = _actions_github__WEBPACK_IMPORTED_MODULE_2__.context.repo;
+    const GITHUB_REPOSITORY = `${_actions_github__WEBPACK_IMPORTED_MODULE_2__.context.repo.owner}/${_actions_github__WEBPACK_IMPORTED_MODULE_2__.context.repo.repo}`;
     const GITHUB_RUN_ID = _actions_github__WEBPACK_IMPORTED_MODULE_2__.context.runId;
     const sprklPushCmd = `sprkl ci push --token=${TOKEN} --repository=${GITHUB_REPOSITORY} --run=${GITHUB_RUN_ID}`;
-    await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec(sprklPushCmd, [], {});
+    await _actions_exec__WEBPACK_IMPORTED_MODULE_1__.exec(sprklPushCmd);
 })();
 
 })();
