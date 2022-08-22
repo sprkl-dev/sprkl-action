@@ -1,4 +1,4 @@
-name: "sprkl: setup and pusg"
+name: "sprkl: setup and push"
 decription: "Setup sprkl and push sprkl snapshot to CI platform at the end of the job"
 
 inputs:
