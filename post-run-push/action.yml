@@ -8,5 +8,5 @@ inputs:
 
 runs:
   using: "node16"
-  main: build/main.js
-  post: build/post.js
+  main: dist/main/index.js
+  post: dist/post/index.js
