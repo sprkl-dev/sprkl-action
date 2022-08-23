@@ -3988,8 +3988,7 @@ const exec = __importStar(__nccwpck_require__(514));
     }
     // set sprkl environment if requested
     if (setEnv === 'true') {
-        const sprklPrefix = await getSprklPrefix();
-        console.log(sprklPrefix);
+        const sprklPrefix = await getSprklPrefixOrFail();
         core.exportVariable('SPRKL_PREFIX', sprklPrefix);
         core.exportVariable('NODE_OPTIONS', '-r @sprkl/obs');
         core.exportVariable('NODE_PATH', `${sprklPrefix}/lib/node_modules`);
@@ -3998,9 +3997,11 @@ const exec = __importStar(__nccwpck_require__(514));
 /**
     Returns sprkl prefix
  */
-async function getSprklPrefix() {
+async function getSprklPrefixOrFail() {
+    const command = 'sprkl config get prefix';
     let myOutput = '';
     let myError = '';
+    // set listeners for the command exec
     const listeners = {
         stdout: (data) => {
             myOutput += data.toString();
@@ -4009,7 +4010,8 @@ async function getSprklPrefix() {
             myError += data.toString();
         }
     };
-    await exec.exec('sprkl config get prefix', [], { listeners: listeners });
+    await exec.exec(command, [], { listeners: listeners });
+    // return the command output if the command ran successfully 
     if (myError.length == 0) {
         return myOutput.trim();
     }

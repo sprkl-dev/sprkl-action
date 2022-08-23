@@ -22,8 +22,7 @@ import * as exec from '@actions/exec';
 
     // set sprkl environment if requested
     if (setEnv === 'true') {
-        const sprklPrefix = await getSprklPrefix();
-        console.log(sprklPrefix);
+        const sprklPrefix = await getSprklPrefixOrFail();
 
         core.exportVariable('SPRKL_PREFIX', sprklPrefix);
         core.exportVariable('NODE_OPTIONS','-r @sprkl/obs');
@@ -34,10 +33,12 @@ import * as exec from '@actions/exec';
 /**
     Returns sprkl prefix
  */
-async function getSprklPrefix(): Promise<string> {
+async function getSprklPrefixOrFail(): Promise<string> {
+    const command = 'sprkl config get prefix';
     let myOutput = '';
     let myError = '';
 
+    // set listeners for the command exec
     const listeners = {
     stdout: (data: Buffer) => {
         myOutput += data.toString();
@@ -47,8 +48,9 @@ async function getSprklPrefix(): Promise<string> {
     }
     };
 
-    await exec.exec('sprkl config get prefix', [], {listeners: listeners});
+    await exec.exec(command, [], {listeners: listeners});
 
+    // return the command output if the command ran successfully 
     if (myError.length == 0) {
         return myOutput.trim();
     } else {
