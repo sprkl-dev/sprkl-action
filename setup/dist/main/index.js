@@ -3988,13 +3988,35 @@ const exec = __importStar(__nccwpck_require__(514));
     }
     // set sprkl environment if requested
     if (setEnv === 'true') {
-        const setEnvCmd = `SPRKL_PREFIX=$(sprkl config get prefix) && 
-        "NODE_OPTIONS=-r @sprkl/sprkl" >> $GITHUB_ENV && 
-        echo "SPRKL_PREFIX=$SPRKL_PREFIX" >> $GITHUB_ENV && 
-        echo "NODE_PATH=$SPRKL_PREFIX/lib/node_modules" >> $GITHUB_ENV`;
-        await exec.exec(setEnvCmd);
+        const sprklPrefix = await getSprklPrefix();
+        console.log(sprklPrefix);
+        core.exportVariable('SPRKL_PREFIX', sprklPrefix);
+        core.exportVariable('NODE_OPTIONS', '-r @sprkl/obs');
+        core.exportVariable('NODE_PATH', `${sprklPrefix}/lib/node_modules`);
     }
 })();
+/**
+    Returns sprkl prefix
+ */
+async function getSprklPrefix() {
+    let myOutput = '';
+    let myError = '';
+    const listeners = {
+        stdout: (data) => {
+            myOutput += data.toString();
+        },
+        stderr: (data) => {
+            myError += data.toString();
+        }
+    };
+    await exec.exec('sprkl config get prefix', [], { listeners: listeners });
+    if (myError.length == 0) {
+        return myOutput;
+    }
+    else {
+        throw new Error(myError);
+    }
+}
 
 
 /***/ }),
