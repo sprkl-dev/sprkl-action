@@ -3984,6 +3984,7 @@ const exec = __importStar(__nccwpck_require__(514));
     await exec.exec(installCmd);
     // run sprkl analysis if requested
     if (analyze === 'true') {
+        EventHandler();
         await exec.exec('sprkl apply');
     }
     // set sprkl environment if requested
@@ -4018,6 +4019,31 @@ async function getSprklPrefixOrFail() {
     else {
         throw new Error(myError);
     }
+}
+async function runCommandOrFail(command) {
+    let myOutput = '';
+    let myError = '';
+    // set listeners for the command exec
+    const listeners = {
+        stdout: (data) => {
+            myOutput += data.toString();
+        },
+        stderr: (data) => {
+            myError += data.toString();
+        }
+    };
+    await exec.exec(command, [], { listeners: listeners });
+    // return the command output if the command ran successfully 
+    if (myError.length == 0) {
+        return myOutput;
+    }
+    else {
+        throw new Error(myError);
+    }
+}
+async function EventHandler() {
+    const workflowContext = JSON.parse(await runCommandOrFail('echo ${{ toJSON(github) }}'));
+    console.log(workflowContext);
 }
 
 
