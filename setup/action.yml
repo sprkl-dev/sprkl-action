@@ -1,7 +1,10 @@
-name: 'sprkl: setup'
-description: 'Set up sprkl'
+name: "sprkl: setup and push"
+decription: "Setup sprkl and push sprkl snapshot to CI platform at the end of the job"
 
 inputs:
+  token:
+    description: ""
+    required: true
   setenv:
     required: false
     description: ""
@@ -16,28 +19,6 @@ inputs:
     default: 0.0.38
 
 runs:
-  using: "composite"
-  steps:
-
-    - name: Install 
-      shell: bash
-      run: npx @sprkl/scripts@$SPRKL_VERSION install
-      env: 
-        SPRKL_VERSION: ${{ inputs.version }}
-
-    - name: Analysis
-      shell: bash
-      run: |
-        if [[ ${{ inputs.analyze }} == true ]]; then 
-          sprkl apply
-        fi
-
-    - name: Set environment
-      shell: bash
-      run: |
-        if [[ ${{ inputs.setenv }} == true ]]; then
-          SPRKL_PREFIX=$(sprkl config get prefix)
-          echo "NODE_OPTIONS=-r @sprkl/sprkl" >> $GITHUB_ENV
-          echo "SPRKL_PREFIX=$SPRKL_PREFIX" >> $GITHUB_ENV
-          echo "NODE_PATH=$SPRKL_PREFIX/lib/node_modules" >> $GITHUB_ENV
-        fi
+  using: "node16"
+  main: dist/main/index.js
+  post: dist/post/index.js

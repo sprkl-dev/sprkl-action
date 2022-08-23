@@ -10782,15 +10782,6 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const exec = __importStar(__nccwpck_require__(1514));
@@ -10798,15 +10789,15 @@ const github = __importStar(__nccwpck_require__(5438));
 /**
  Push sprkl state to CI platfrom at the end of the job
  */
-(() => __awaiter(void 0, void 0, void 0, function* () {
+(async () => {
     // get the input values from the action
-    const TOKEN = core.getInput('token');
-    const GITHUB_REPOSITORY = `${github.context.repo.owner}/${github.context.repo.repo}`;
-    const GITHUB_RUN_ID = github.context.runId;
+    const token = core.getInput('token');
+    const githubRepository = `${github.context.repo.owner}/${github.context.repo.repo}`;
+    const githubRunId = github.context.runId;
     // push sprkl state to CI platfrom
-    const sprklPushCmd = `sprkl ci push --token=${TOKEN} --repository=${GITHUB_REPOSITORY} --run=${GITHUB_RUN_ID}`;
-    yield exec.exec(sprklPushCmd);
-}))();
+    const sprklPushCmd = `sprkl ci push --token=${token} --repository=${githubRepository} --run=${githubRunId}`;
+    await exec.exec(sprklPushCmd);
+})();
 
 
 /***/ }),
