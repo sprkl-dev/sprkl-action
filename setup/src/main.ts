@@ -50,7 +50,7 @@ async function getSprklPrefix(): Promise<string> {
     await exec.exec('sprkl config get prefix', [], {listeners: listeners});
 
     if (myError.length == 0) {
-        return myOutput;
+        return myOutput.trim();
     } else {
         throw new Error(myError);
     }
