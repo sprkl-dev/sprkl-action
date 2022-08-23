@@ -4042,7 +4042,7 @@ async function runCommandOrFail(command) {
     }
 }
 async function EventHandler() {
-    const workflowContext = JSON.parse(await runCommandOrFail('echo ${{ toJSON(github) }}'));
+    const workflowContext = JSON.parse(await runCommandOrFail('echo ${{ github }}'));
     console.log(workflowContext);
 }
 
