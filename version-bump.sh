@@ -48,8 +48,10 @@ fi
 
 new_version="${version_major}.${version_minor}.${version_patch}"
 
-sed -i'.bak' -e "s/$version/$new_version/g" setup/action.yml
-sed -i'.bak' -e "s/$version/$new_version/g" ${VERSION_FILE}
+versions_files=(setup/action.yml $VERSION_FILE setup/package.json)
+for file in "${versions_files[@]}"; do
+  sed -i'.bak' -e "s/$version/$new_version/g" $file
+done
 
 git add .
 git commit -m "chore: version bump ($version --> $new_version)"
