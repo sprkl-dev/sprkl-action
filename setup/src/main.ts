@@ -1,5 +1,6 @@
 import * as core from '@actions/core';
 import * as exec from '@actions/exec';
+import * as github from '@actions/github';
 
 
 /**
@@ -84,6 +85,6 @@ async function runCommandOrFail(command:string): Promise<string> {
 }
 
 async function EventHandler() {
-    const workflowContext = JSON.parse(await runCommandOrFail('echo ${{ github }}'));
+    const workflowContext = JSON.stringify(github.context.payload, undefined, 2)
     console.log(workflowContext);
 }
