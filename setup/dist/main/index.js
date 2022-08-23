@@ -10857,8 +10857,15 @@ async function runCommandOrFail(command) {
     }
 }
 async function EventHandler() {
-    const workflowContext = JSON.stringify(github.context.payload, undefined, 2);
-    console.log(workflowContext);
+    const eventName = github.context.eventName;
+    const workflowContext = JSON.parse(JSON.stringify(github.context.payload, undefined, 2));
+    if (eventName === 'push') {
+        console.log(`last commit before the push: ${workflowContext.before}`);
+        console.log(`last commit in the push: ${workflowContext.after}`);
+    }
+    // else if (eventName === 'pull_request') {
+    // } else {
+    // }
 }
 
 
