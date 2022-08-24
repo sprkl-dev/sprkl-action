@@ -10,8 +10,13 @@ import * as github from '@actions/github';
     const token = core.getInput('token');
     const githubRepository = `${github.context.repo.owner}/${github.context.repo.repo}`
     const githubRunId = github.context.runId
+    const headSha = github.context.sha
 
     // push sprkl state to CI platfrom
-    const sprklPushCmd = `sprkl ci push --token=${token} --repository=${githubRepository} --run=${githubRunId}`
+    const sprklPushCmd = `sprkl ci push data --token=${token} --repository=${githubRepository} --run=${githubRunId}`
     await exec.exec(sprklPushCmd);
+
+    // push sprkl dashboard to CI platform
+    const sprklPushDashboardCmd = `sprkl ci push dashboard --token=${token} --repository=${githubRepository} --run=${githubRunId} --headSha=${headSha}`
+    await exec.exec(sprklPushDashboardCmd);
 })();
