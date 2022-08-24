@@ -15808,13 +15808,35 @@ async function EventHandler() {
         const commitsListLink = workflowContext.pull_request.commits_url;
         getPullRequestCommits(commitsListLink);
     }
-    // else {
-    // }
+    else {
+        getLastCommitsInRepo();
+    }
 }
 async function getPullRequestCommits(url) {
     const { data, status } = await axios_1.default.get(url, {
         headers: {
             Accept: 'application/json',
+        },
+    });
+    const commits = JSON.parse(JSON.stringify(data));
+    let commitsIdsArray = [];
+    for (var commit of commits) {
+        commitsIdsArray.push(commit.sha);
+    }
+    console.log(`status: ${status}`);
+    console.log(`number of commits: ${commitsIdsArray.length}`);
+    console.log(`Commits: ${commitsIdsArray}`);
+}
+async function getLastCommitsInRepo() {
+    const repoOwner = github.context.repo.owner;
+    const repo = github.context.repo.repo;
+    const url = `https://api.github.com/repos/${repoOwner}/${repo}/commits`;
+    const { data, status } = await axios_1.default.get(url, {
+        headers: {
+            Accept: 'application/json',
+        },
+        params: {
+            per_page: 10
         },
     });
     const commits = JSON.parse(JSON.stringify(data));

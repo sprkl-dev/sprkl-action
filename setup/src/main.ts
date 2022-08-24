@@ -100,9 +100,9 @@ async function EventHandler() {
     else if (eventName === 'pull_request') {
         const commitsListLink = workflowContext.pull_request.commits_url;
         getPullRequestCommits(commitsListLink);
-    } 
-    // else {
-    // }
+    } else {
+        getLastCommitsInRepo();
+    }
 }
 
 async function getPullRequestCommits(url: string) {
@@ -118,8 +118,28 @@ async function getPullRequestCommits(url: string) {
         }
         console.log(`status: ${status}`);
         console.log(`number of commits: ${commitsIdsArray.length}`);
-        console.log(`Commits: ${commitsIdsArray}`);
+        console.log(`Commits: ${commitsIdsArray}`);  
+}
 
-      
+async function getLastCommitsInRepo() {
+    const repoOwner = github.context.repo.owner;
+    const repo = github.context.repo.repo
+    const url = `https://api.github.com/repos/${repoOwner}/${repo}/commits`
+    const {data, status} = await axios.get(url, {
+        headers: {
+          Accept: 'application/json',
+        },
+        params: {
+            per_page: 10
+        },
+      },);
+      const commits = JSON.parse(JSON.stringify(data));
+      let commitsIdsArray: string[] = [];
+        for (var commit of commits) {
+            commitsIdsArray.push(commit.sha);
+        }
+        console.log(`status: ${status}`);
+        console.log(`number of commits: ${commitsIdsArray.length}`);
+        console.log(`Commits: ${commitsIdsArray}`);  
 }
 
