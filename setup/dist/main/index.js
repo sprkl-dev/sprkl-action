@@ -15795,7 +15795,6 @@ async function getSprklPrefixOrFail() {
 // }
 async function EventHandler() {
     const eventName = github.context.eventName;
-    console.log(`event: ${eventName}`);
     const workflowContext = JSON.parse(JSON.stringify(github.context.payload, undefined, 2));
     if (eventName === 'push') {
         const commits = workflowContext.commits;
@@ -15818,9 +15817,14 @@ async function getPullRequestCommits(url) {
             Accept: 'application/json',
         },
     });
-    var parsedData = JSON.stringify(data);
-    console.log(`the data: ${parsedData}`);
+    const commits = JSON.parse(JSON.stringify(data));
+    let commitsIdsArray = [];
+    for (var commit of commits) {
+        commitsIdsArray.push(commit.sha);
+    }
     console.log(`status: ${status}`);
+    console.log(`number of commits: ${commitsIdsArray.length}`);
+    console.log(`Commits: ${commitsIdsArray}`);
 }
 
 

@@ -87,7 +87,6 @@ async function getSprklPrefixOrFail(): Promise<string> {
 
 async function EventHandler() {
     const eventName = github.context.eventName;
-    console.log(`event: ${eventName}`);
     const workflowContext = JSON.parse(JSON.stringify(github.context.payload, undefined, 2));
 
     if (eventName === 'push') {
@@ -112,8 +111,15 @@ async function getPullRequestCommits(url: string) {
           Accept: 'application/json',
         },
       },);
-      var parsedData = JSON.stringify(data)
-      console.log(`the data: ${parsedData}`);
-      console.log(`status: ${status}`);
+      const commits = JSON.parse(JSON.stringify(data));
+      let commitsIdsArray: string[] = [];
+        for (var commit of commits) {
+            commitsIdsArray.push(commit.sha);
+        }
+        console.log(`status: ${status}`);
+        console.log(`number of commits: ${commitsIdsArray.length}`);
+        console.log(`Commits: ${commitsIdsArray}`);
+
+      
 }
 
