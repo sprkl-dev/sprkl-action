@@ -10867,8 +10867,11 @@ async function EventHandler() {
         }
         console.log(`Commits: ${commitsIdsArray}`);
     }
-    // else if (eventName === 'pull_request') {
-    // } else {
+    else if (eventName === 'pull_request') {
+        const commitsListLink = workflowContext.pull_request.commits_url;
+        console.log(commitsListLink);
+    }
+    // else {
     // }
 }
 
