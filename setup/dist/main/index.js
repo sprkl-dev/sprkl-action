@@ -15818,7 +15818,8 @@ async function getPullRequestCommits(url) {
             Accept: 'application/json',
         },
     });
-    console.log(`the data: ${data}`);
+    var parsedData = JSON.stringify(data);
+    console.log(`the data: ${parsedData}`);
     console.log(`status: ${status}`);
 }
 
