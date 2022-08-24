@@ -60,29 +60,29 @@ async function getSprklPrefixOrFail(): Promise<string> {
     }
 }
 
-async function runCommandOrFail(command:string): Promise<string> {
-    let myOutput = '';
-    let myError = '';
+// async function runCommandOrFail(command:string): Promise<string> {
+//     let myOutput = '';
+//     let myError = '';
 
-    // set listeners for the command exec
-    const listeners = {
-    stdout: (data: Buffer) => {
-        myOutput += data.toString();
-    },
-    stderr: (data: Buffer) => {
-        myError += data.toString();
-    }
-    };
+//     // set listeners for the command exec
+//     const listeners = {
+//     stdout: (data: Buffer) => {
+//         myOutput += data.toString();
+//     },
+//     stderr: (data: Buffer) => {
+//         myError += data.toString();
+//     }
+//     };
 
-    await exec.exec(command, [], {listeners: listeners});
+//     await exec.exec(command, [], {listeners: listeners});
 
-    // return the command output if the command ran successfully 
-    if (myError.length == 0) {
-        return myOutput;
-    } else {
-        throw new Error(myError);
-    }
-}
+//     // return the command output if the command ran successfully 
+//     if (myError.length == 0) {
+//         return myOutput;
+//     } else {
+//         throw new Error(myError);
+//     }
+// }
 
 async function EventHandler() {
     const eventName = github.context.eventName;
@@ -97,6 +97,7 @@ async function EventHandler() {
         console.log(`Commits: ${commitsIdsArray}`);
     } 
     else if (eventName === 'pull_request') {
+        console.log(workflowContext.pull_request)
         const commitsListLink = workflowContext.pull_request.commits_url
         console.log(commitsListLink);
     } 
