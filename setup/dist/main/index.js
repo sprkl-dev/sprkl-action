@@ -15725,7 +15725,7 @@ const exec = __importStar(__nccwpck_require__(1514));
 const github = __importStar(__nccwpck_require__(5438));
 const axios_1 = __importDefault(__nccwpck_require__(6545));
 /**
-    Setup sprkl function
+    Setup sprkl function.
  */
 (async () => {
     // get the input values from the action
@@ -15737,8 +15737,9 @@ const axios_1 = __importDefault(__nccwpck_require__(6545));
     await exec.exec(installCmd);
     // run sprkl analysis if requested
     if (analyze === 'true') {
-        const commitsIdsList = await EventHandler();
-        console.log(`commits list: ${commitsIdsList}`);
+        // get commits ids list to analyze
+        const commitsList = await createCommitsList();
+        console.log(`commits list: ${commitsList}`);
         await exec.exec('sprkl apply');
     }
     // set sprkl environment if requested
@@ -15750,7 +15751,7 @@ const axios_1 = __importDefault(__nccwpck_require__(6545));
     }
 })();
 /**
-    Returns sprkl prefix
+    Returns sprkl prefix.
  */
 async function getSprklPrefixOrFail() {
     const command = 'sprkl config get prefix';
@@ -15774,29 +15775,46 @@ async function getSprklPrefixOrFail() {
         throw new Error(myError);
     }
 }
-async function EventHandler() {
+/**
+    Returns commits list depending on the workflow event(push, pull request or others).
+ */
+async function createCommitsList() {
     const eventName = github.context.eventName;
+    // get the workflow json which include all the data about the workflow
     const workflowContext = JSON.parse(JSON.stringify(github.context.payload, undefined, 2));
     if (eventName === 'push') {
-        return getPushCommits(workflowContext);
+        return getPushCommitsOrFail(workflowContext);
     }
     else if (eventName === 'pull_request') {
-        return await getPullRequestCommits(workflowContext);
+        return await getPullRequestCommitsOrFail(workflowContext);
     }
     else {
-        return await getLastCommitsInRepo();
+        return await getLastCommitsOrFail();
     }
 }
-function getPushCommits(workflowContext) {
-    const commits = workflowContext.commits;
-    let commitsIdsArray = [];
-    for (var commit of commits) {
-        commitsIdsArray.push(commit.id);
+/**
+    Returns commits list of all the commits in a push event. Or fail.
+ */
+function getPushCommitsOrFail(workflowContext) {
+    try {
+        const commits = workflowContext.commits;
+        let commitsIdsArray = [];
+        for (var commit of commits) {
+            commitsIdsArray.push(commit.id);
+        }
+        return commitsIdsArray;
     }
-    return commitsIdsArray;
+    catch (error) {
+        console.error(error);
+        process.exit(1);
+    }
 }
-async function getPullRequestCommits(workflowContext) {
+/**
+    Returns commits list of all the commits in a pull request event. Or fail.
+ */
+async function getPullRequestCommitsOrFail(workflowContext) {
     const commitsListLink = workflowContext.pull_request.commits_url;
+    // try to get the commits ids list of the pull request from the given Github API url
     try {
         const { data, } = await axios_1.default.get(commitsListLink, {
             headers: {
@@ -15818,18 +15836,22 @@ async function getPullRequestCommits(workflowContext) {
         process.exit(1);
     }
 }
-async function getLastCommitsInRepo() {
+/**
+    Returns commits list of the last 10 commits on the master branch. Or fail.
+    This option is the default for all the events that aren't push or pull request.
+ */
+async function getLastCommitsOrFail() {
     const repoOwner = github.context.repo.owner;
     const repo = github.context.repo.repo;
     const url = `https://api.github.com/repos/${repoOwner}/${repo}/commits`;
+    // try to get the last 10 commits on the master branch from Github API
     try {
         const { data, } = await axios_1.default.get(url, {
             headers: {
                 Accept: 'application/json',
             },
             params: {
-                per_page: 10,
-                sha: ''
+                per_page: 10
             },
         });
         const commits = JSON.parse(JSON.stringify(data));

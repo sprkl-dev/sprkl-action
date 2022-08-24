@@ -5,7 +5,7 @@ import axios from 'axios';
 
 
 /**
-    Setup sprkl function
+    Setup sprkl function.
  */
 (async () => {
     // get the input values from the action
@@ -19,8 +19,9 @@ import axios from 'axios';
 
     // run sprkl analysis if requested
     if (analyze === 'true') {
-        const commitsIdsList = await EventHandler();
-        console.log(`commits list: ${commitsIdsList}`);
+        // get commits ids list to analyze
+        const commitsList = await createCommitsList();
+        console.log(`commits list: ${commitsList}`);
         await exec.exec('sprkl apply');
     }
 
@@ -35,7 +36,7 @@ import axios from 'axios';
 })();
 
 /**
-    Returns sprkl prefix
+    Returns sprkl prefix.
  */
 async function getSprklPrefixOrFail(): Promise<string> {
     const command = 'sprkl config get prefix';
@@ -62,30 +63,48 @@ async function getSprklPrefixOrFail(): Promise<string> {
     }
 }
 
-async function EventHandler(): Promise<string[]> {
+/**
+    Returns commits list depending on the workflow event(push, pull request or others).
+ */
+async function createCommitsList(): Promise<string[]> {
     const eventName = github.context.eventName;
+    // get the workflow json which include all the data about the workflow
     const workflowContext = JSON.parse(JSON.stringify(github.context.payload, undefined, 2));
 
     if (eventName === 'push') {
-        return getPushCommits(workflowContext)
+        return getPushCommitsOrFail(workflowContext)
     } else if (eventName === 'pull_request') {
-        return await getPullRequestCommits(workflowContext);
+        return await getPullRequestCommitsOrFail(workflowContext);
     } else {
-        return await getLastCommitsInRepo();
+        return await getLastCommitsOrFail();
     }
 }
 
-function getPushCommits(workflowContext: any): string[] {
-    const commits = workflowContext.commits;
-    let commitsIdsArray: string[] = [];
-    for (var commit of commits) {
-        commitsIdsArray.push(commit.id);
+/**
+    Returns commits list of all the commits in a push event. Or fail.
+ */
+function getPushCommitsOrFail(workflowContext: any): string[] {
+    try {
+        const commits = workflowContext.commits;
+        let commitsIdsArray: string[] = [];
+        for (var commit of commits) {
+            commitsIdsArray.push(commit.id);
+        }
+        return commitsIdsArray;
+    } catch(error) {
+        console.error(error)
+        process.exit(1)
     }
-    return commitsIdsArray;
+    
 }
 
-async function getPullRequestCommits(workflowContext: any): Promise<string[]> {
+
+/**
+    Returns commits list of all the commits in a pull request event. Or fail.
+ */
+async function getPullRequestCommitsOrFail(workflowContext: any): Promise<string[]> {
     const commitsListLink = workflowContext.pull_request.commits_url;
+    // try to get the commits ids list of the pull request from the given Github API url
     try {
         const {data, } = await axios.get(commitsListLink, {
             headers: {
@@ -108,18 +127,22 @@ async function getPullRequestCommits(workflowContext: any): Promise<string[]> {
     
 }
 
-async function getLastCommitsInRepo(): Promise<string[]> {
+/**
+    Returns commits list of the last 10 commits on the master branch. Or fail.
+    This option is the default for all the events that aren't push or pull request.
+ */
+async function getLastCommitsOrFail(): Promise<string[]> {
     const repoOwner = github.context.repo.owner;
     const repo = github.context.repo.repo
     const url = `https://api.github.com/repos/${repoOwner}/${repo}/commits`
+    // try to get the last 10 commits on the master branch from Github API
     try {
         const {data, } = await axios.get(url, {
             headers: {
               Accept: 'application/json',
             },
             params: {
-                per_page: 10,
-                sha: ''
+                per_page: 10
             },
           },);
         const commits = JSON.parse(JSON.stringify(data));
