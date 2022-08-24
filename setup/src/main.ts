@@ -89,12 +89,12 @@ async function EventHandler() {
     const workflowContext = JSON.parse(JSON.stringify(github.context.payload, undefined, 2))
 
     if (eventName === 'push') {
-        console.log(`last commit before the push: ${workflowContext.before}`);
-        console.log(`last commit in the push: ${workflowContext.after}`);
         const commits = workflowContext.commits;
-        console.log(typeof(commits));
-        console.log(commits[0].id);
-        console.log(commits[0].message);
+        let commitsIdsArray: string[] = [];
+        for (var commit of commits) {
+            commitsIdsArray.push(commit.id);
+        }
+        console.log(`Commits: ${commitsIdsArray}`);
     } 
     // else if (eventName === 'pull_request') {
         
