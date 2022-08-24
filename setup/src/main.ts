@@ -110,6 +110,9 @@ async function getPullRequestCommits(url: string) {
         headers: {
           Accept: 'application/json',
         },
+        params: {
+            per_page: 100
+        },
       },);
       const commits = JSON.parse(JSON.stringify(data));
       let commitsIdsArray: string[] = [];
@@ -130,7 +133,7 @@ async function getLastCommitsInRepo() {
           Accept: 'application/json',
         },
         params: {
-            per_page: 10
+            per_page: 5
         },
       },);
       const commits = JSON.parse(JSON.stringify(data));
