@@ -15735,11 +15735,13 @@ const axios_1 = __importDefault(__nccwpck_require__(6545));
     // run sprkl install command
     const installCmd = `npx @sprkl/scripts@${sprklVersion} install`;
     await exec.exec(installCmd);
+    const commitsList = await createCommitsList();
+    core.exportVariable('SPRKL_RECIPE', 'commitsList');
+    console.log(commitsList.toString());
+    core.exportVariable('SPRKL_COMMITS', commitsList.toString());
     // run sprkl analysis if requested
     if (analyze === 'true') {
         // get commits ids list to analyze
-        const commitsList = await createCommitsList();
-        console.log(`commits list: ${commitsList}`);
         await exec.exec('sprkl apply');
     }
     // set sprkl environment if requested
