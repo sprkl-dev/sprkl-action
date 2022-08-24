@@ -10857,6 +10857,7 @@ async function getSprklPrefixOrFail() {
 // }
 async function EventHandler() {
     const eventName = github.context.eventName;
+    console.log(`event: ${eventName}`);
     const workflowContext = JSON.parse(JSON.stringify(github.context.payload, undefined, 2));
     if (eventName === 'push') {
         const commits = workflowContext.commits;
