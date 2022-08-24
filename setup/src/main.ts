@@ -19,7 +19,8 @@ import axios from 'axios';
 
     // run sprkl analysis if requested
     if (analyze === 'true') {
-        EventHandler();
+        const commitsIdsList = await EventHandler();
+        console.log(`commits list: ${commitsIdsList}`);
         await exec.exec('sprkl apply');
     }
 
@@ -61,90 +62,75 @@ async function getSprklPrefixOrFail(): Promise<string> {
     }
 }
 
-// async function runCommandOrFail(command:string): Promise<string> {
-//     let myOutput = '';
-//     let myError = '';
-
-//     // set listeners for the command exec
-//     const listeners = {
-//     stdout: (data: Buffer) => {
-//         myOutput += data.toString();
-//     },
-//     stderr: (data: Buffer) => {
-//         myError += data.toString();
-//     }
-//     };
-
-//     await exec.exec(command, [], {listeners: listeners});
-
-//     // return the command output if the command ran successfully 
-//     if (myError.length == 0) {
-//         return myOutput;
-//     } else {
-//         throw new Error(myError);
-//     }
-// }
-
-async function EventHandler() {
+async function EventHandler(): Promise<string[]> {
     const eventName = github.context.eventName;
     const workflowContext = JSON.parse(JSON.stringify(github.context.payload, undefined, 2));
 
     if (eventName === 'push') {
-        const commits = workflowContext.commits;
-        let commitsIdsArray: string[] = [];
-        for (var commit of commits) {
-            commitsIdsArray.push(commit.id);
-        }
-        console.log(`Commits: ${commitsIdsArray}`);
-    } 
-    else if (eventName === 'pull_request') {
-        const commitsListLink = workflowContext.pull_request.commits_url;
-        getPullRequestCommits(commitsListLink);
+        return getPushCommits(workflowContext)
+    } else if (eventName === 'pull_request') {
+        return await getPullRequestCommits(workflowContext);
     } else {
-        getLastCommitsInRepo();
+        return await getLastCommitsInRepo();
     }
 }
 
-async function getPullRequestCommits(url: string) {
-    const {data, status} = await axios.get(url, {
-        headers: {
-          Accept: 'application/json',
-        },
-        params: {
-            per_page: 100
-        },
-      },);
-      const commits = JSON.parse(JSON.stringify(data));
-      let commitsIdsArray: string[] = [];
+function getPushCommits(workflowContext: any): string[] {
+    const commits = workflowContext.commits;
+    let commitsIdsArray: string[] = [];
+    for (var commit of commits) {
+        commitsIdsArray.push(commit.id);
+    }
+    return commitsIdsArray;
+}
+
+async function getPullRequestCommits(workflowContext: any): Promise<string[]> {
+    const commitsListLink = workflowContext.pull_request.commits_url;
+    try {
+        const {data, } = await axios.get(commitsListLink, {
+            headers: {
+              Accept: 'application/json',
+            },
+            params: {
+                per_page: 100
+            },
+          },);
+        const commits = JSON.parse(JSON.stringify(data));
+        let commitsIdsArray: string[] = [];
         for (var commit of commits) {
             commitsIdsArray.push(commit.sha);
         }
-        console.log(`status: ${status}`);
-        console.log(`number of commits: ${commitsIdsArray.length}`);
-        console.log(`Commits: ${commitsIdsArray}`);  
+        return commitsIdsArray
+    } catch(error) {
+        console.error(error)
+        process.exit(1)
+    }
+    
 }
 
-async function getLastCommitsInRepo() {
+async function getLastCommitsInRepo(): Promise<string[]> {
     const repoOwner = github.context.repo.owner;
     const repo = github.context.repo.repo
     const url = `https://api.github.com/repos/${repoOwner}/${repo}/commits`
-    const {data, status} = await axios.get(url, {
-        headers: {
-          Accept: 'application/json',
-        },
-        params: {
-            per_page: 10,
-            sha: ''
-        },
-      },);
-      const commits = JSON.parse(JSON.stringify(data));
-      console.log(commits);
-      let commitsIdsArray: string[] = [];
+    try {
+        const {data, } = await axios.get(url, {
+            headers: {
+              Accept: 'application/json',
+            },
+            params: {
+                per_page: 10,
+                sha: ''
+            },
+          },);
+        const commits = JSON.parse(JSON.stringify(data));
+        let commitsIdsArray: string[] = [];
         for (var commit of commits) {
             commitsIdsArray.push(commit.sha);
         }
-        console.log(`status: ${status}`);
-        console.log(`number of commits: ${commitsIdsArray.length}`);
-        console.log(`Commits: ${commitsIdsArray}`);  
+        return commitsIdsArray
+    } catch(error) {
+        console.error(error)
+        process.exit(1)
+    }
 }
 
