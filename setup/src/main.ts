@@ -133,7 +133,8 @@ async function getLastCommitsInRepo() {
           Accept: 'application/json',
         },
         params: {
-            per_page: 10
+            per_page: 10,
+            sha: ''
         },
       },);
       const commits = JSON.parse(JSON.stringify(data));
