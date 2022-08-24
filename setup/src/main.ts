@@ -1,6 +1,7 @@
 import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import * as github from '@actions/github';
+import axios from 'axios';
 
 
 /**
@@ -98,11 +99,20 @@ async function EventHandler() {
         console.log(`Commits: ${commitsIdsArray}`);
     } 
     else if (eventName === 'pull_request') {
-        console.log(workflowContext.pull_request)
-        const commitsListLink = workflowContext.pull_request.commits_url
-        console.log(commitsListLink);
+        const commitsListLink = workflowContext.pull_request.commits_url;
+        getPullRequestCommits(commitsListLink);
     } 
     // else {
     // }
+}
+
+async function getPullRequestCommits(url: string) {
+    const {data, status} = await axios.get(url, {
+        headers: {
+          Accept: 'application/json',
+        },
+      },);
+      console.log(`the data: ${data}`);
+      console.log(`status: ${status}`);
 }
 
