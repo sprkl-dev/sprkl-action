@@ -15843,6 +15843,7 @@ async function getLastCommitsInRepo() {
         },
     });
     const commits = JSON.parse(JSON.stringify(data));
+    console.log(commits);
     let commitsIdsArray = [];
     for (var commit of commits) {
         commitsIdsArray.push(commit.sha);
