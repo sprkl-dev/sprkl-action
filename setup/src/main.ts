@@ -12,17 +12,21 @@ import axios from 'axios';
     const sprklVersion = core.getInput('version');
     const analyze = core.getInput('analyze');
     const setEnv = core.getInput('setenv');
+    const recipe = core.getInput('recipe');
+
+    // set sprkl recipe environment variable, by default if there isn't input, the recipe is commitsList
+    core.exportVariable('SPRKL_RECIPE', recipe);
 
     // run sprkl install command
     const installCmd = `npx @sprkl/scripts@${sprklVersion} install`;
     await exec.exec(installCmd);
 
-    // get commits list string for analysis
-    const commitsListString = await createCommitsList();
-
-    // export environment variables for commitsList recipe 
-    core.exportVariable('SPRKL_RECIPE', 'commitsList');
-    core.exportVariable('SPRKL_COMMITS', commitsListString);
+    if (recipe === 'commitsList') {
+        // get commits list string for analysis
+        const commitsListString = await createCommitsList();
+        // export environment variables for commitsList recipe 
+        core.exportVariable('SPRKL_COMMITS', commitsListString);
+    }
     
     // run sprkl analysis if requested
     if (analyze === 'true') {
