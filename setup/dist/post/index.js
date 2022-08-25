@@ -10786,6 +10786,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const exec = __importStar(__nccwpck_require__(1514));
 const github = __importStar(__nccwpck_require__(5438));
+const fs_1 = __nccwpck_require__(7147);
 /**
  Push sprkl state to CI platfrom at the end of the job
  */
@@ -10794,10 +10795,34 @@ const github = __importStar(__nccwpck_require__(5438));
     const token = core.getInput('token');
     const githubRepository = `${github.context.repo.owner}/${github.context.repo.repo}`;
     const githubRunId = github.context.runId;
+    const headSha = getHeadCommitSha();
     // push sprkl state to CI platfrom
-    const sprklPushCmd = `sprkl ci push --token=${token} --repository=${githubRepository} --run=${githubRunId}`;
+    const sprklPushCmd = `sprkl ci push data --token=${token} --repository=${githubRepository} --run=${githubRunId}`;
     await exec.exec(sprklPushCmd);
+    // push sprkl dashboard to CI platform
+    const sprklPushDashboardCmd = `sprkl ci push dashboard --token=${token} --repository=${githubRepository} --run=${githubRunId} --headSha=${headSha}`;
+    await exec.exec(sprklPushDashboardCmd);
 })();
+function getHeadCommitSha() {
+    const eventPath = process.env['GITHUB_EVENT_PATH'];
+    if (!eventPath) {
+        console.log(`GITHUB_EVENT_PATH is missing, using GITHUB_SHA=${github.context.sha} instead`);
+        return github.context.sha;
+    }
+    if (!(0, fs_1.existsSync)(eventPath)) {
+        console.log(`Event path ${eventPath} is not exists, using GITHUB_SHA=${github.context.sha} instead`);
+        return github.context.sha;
+    }
+    try {
+        const eventData = (0, fs_1.readFileSync)(eventPath, { flag: 'r', encoding: 'utf-8' });
+        const event = JSON.parse(eventData);
+        return event.pull_request.head.sha;
+    }
+    catch (e) {
+        console.log(`Could not read & parse github event from ${eventPath}, using GITHUB_SHA=${github.context.sha} instead`);
+        return github.context.sha;
+    }
+}
 
 
 /***/ }),
