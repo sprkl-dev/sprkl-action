@@ -17,14 +17,15 @@ import axios from 'axios';
     const installCmd = `npx @sprkl/scripts@${sprklVersion} install`;
     await exec.exec(installCmd);
 
-    const commitsList = await createCommitsList();
+    // get commits list string for analysis
+    const commitsListString = await createCommitsList();
+
+    // export environment variables for commitsList recipe 
     core.exportVariable('SPRKL_RECIPE', 'commitsList');
-    console.log(commitsList.toString());
-    core.exportVariable('SPRKL_COMMITS', commitsList.toString());
+    core.exportVariable('SPRKL_COMMITS', commitsListString);
     
     // run sprkl analysis if requested
     if (analyze === 'true') {
-        // get commits ids list to analyze
         await exec.exec('sprkl apply');
     }
 
@@ -34,7 +35,7 @@ import axios from 'axios';
 
         core.exportVariable('SPRKL_PREFIX', sprklPrefix);
         core.exportVariable('NODE_OPTIONS','-r @sprkl/obs');
-        core.exportVariable('NODE_PATH', `${sprklPrefix}/lib/node_modules`)
+        core.exportVariable('NODE_PATH', `${sprklPrefix}/lib/node_modules`);
     }
 })();
 
@@ -67,15 +68,15 @@ async function getSprklPrefixOrFail(): Promise<string> {
 }
 
 /**
-    Returns commits list depending on the workflow event(push, pull request or others).
+    Returns commits list string depending on the workflow event(push, pull request or others).
  */
-async function createCommitsList(): Promise<string[]> {
+async function createCommitsList(): Promise<string> {
     const eventName = github.context.eventName;
     // get the workflow json which include all the data about the workflow
     const workflowContext = JSON.parse(JSON.stringify(github.context.payload, undefined, 2));
 
     if (eventName === 'push') {
-        return getPushCommitsOrFail(workflowContext)
+        return getPushCommitsOrFail(workflowContext);
     } else if (eventName === 'pull_request') {
         return await getPullRequestCommitsOrFail(workflowContext);
     } else {
@@ -84,28 +85,28 @@ async function createCommitsList(): Promise<string[]> {
 }
 
 /**
-    Returns commits list of all the commits in a push event. Or fail.
+    Returns commits list string of all the commits in a push event. Or fail.
  */
-function getPushCommitsOrFail(workflowContext: any): string[] {
+function getPushCommitsOrFail(workflowContext: any): string {
     try {
         const commits = workflowContext.commits;
         let commitsIdsArray: string[] = [];
         for (var commit of commits) {
             commitsIdsArray.push(commit.id);
         }
-        return commitsIdsArray;
+        return commitsIdsArray.toString();
     } catch(error) {
-        console.error(error)
-        process.exit(1)
+        console.error(error);
+        process.exit(1);
     }
     
 }
 
 
 /**
-    Returns commits list of all the commits in a pull request event. Or fail.
+    Returns commits list string of all the commits in a pull request event. Or fail.
  */
-async function getPullRequestCommitsOrFail(workflowContext: any): Promise<string[]> {
+async function getPullRequestCommitsOrFail(workflowContext: any): Promise<string> {
     const commitsListLink = workflowContext.pull_request.commits_url;
     // try to get the commits ids list of the pull request from the given Github API url
     try {
@@ -122,19 +123,19 @@ async function getPullRequestCommitsOrFail(workflowContext: any): Promise<string
         for (var commit of commits) {
             commitsIdsArray.push(commit.sha);
         }
-        return commitsIdsArray
+        return commitsIdsArray.toString();
     } catch(error) {
-        console.error(error)
-        process.exit(1)
+        console.error(error);
+        process.exit(1);
     }
     
 }
 
 /**
-    Returns commits list of the last 10 commits on the master branch. Or fail.
+    Returns commits list string of the last 10 commits on the master branch. Or fail.
     This option is the default for all the events that aren't push or pull request.
  */
-async function getLastCommitsOrFail(): Promise<string[]> {
+async function getLastCommitsOrFail(): Promise<string> {
     const repoOwner = github.context.repo.owner;
     const repo = github.context.repo.repo
     const url = `https://api.github.com/repos/${repoOwner}/${repo}/commits`
@@ -153,10 +154,10 @@ async function getLastCommitsOrFail(): Promise<string[]> {
         for (var commit of commits) {
             commitsIdsArray.push(commit.sha);
         }
-        return commitsIdsArray
+        return commitsIdsArray.toString();
     } catch(error) {
-        console.error(error)
-        process.exit(1)
+        console.error(error);
+        process.exit(1);
     }
 }
 

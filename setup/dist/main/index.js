@@ -15735,13 +15735,13 @@ const axios_1 = __importDefault(__nccwpck_require__(6545));
     // run sprkl install command
     const installCmd = `npx @sprkl/scripts@${sprklVersion} install`;
     await exec.exec(installCmd);
-    const commitsList = await createCommitsList();
+    // get commits list string for analysis
+    const commitsListString = await createCommitsList();
+    // export environment variables for commitsList recipe 
     core.exportVariable('SPRKL_RECIPE', 'commitsList');
-    console.log(commitsList.toString());
-    core.exportVariable('SPRKL_COMMITS', commitsList.toString());
+    core.exportVariable('SPRKL_COMMITS', commitsListString);
     // run sprkl analysis if requested
     if (analyze === 'true') {
-        // get commits ids list to analyze
         await exec.exec('sprkl apply');
     }
     // set sprkl environment if requested
@@ -15778,7 +15778,7 @@ async function getSprklPrefixOrFail() {
     }
 }
 /**
-    Returns commits list depending on the workflow event(push, pull request or others).
+    Returns commits list string depending on the workflow event(push, pull request or others).
  */
 async function createCommitsList() {
     const eventName = github.context.eventName;
@@ -15795,7 +15795,7 @@ async function createCommitsList() {
     }
 }
 /**
-    Returns commits list of all the commits in a push event. Or fail.
+    Returns commits list string of all the commits in a push event. Or fail.
  */
 function getPushCommitsOrFail(workflowContext) {
     try {
@@ -15804,7 +15804,7 @@ function getPushCommitsOrFail(workflowContext) {
         for (var commit of commits) {
             commitsIdsArray.push(commit.id);
         }
-        return commitsIdsArray;
+        return commitsIdsArray.toString();
     }
     catch (error) {
         console.error(error);
@@ -15812,7 +15812,7 @@ function getPushCommitsOrFail(workflowContext) {
     }
 }
 /**
-    Returns commits list of all the commits in a pull request event. Or fail.
+    Returns commits list string of all the commits in a pull request event. Or fail.
  */
 async function getPullRequestCommitsOrFail(workflowContext) {
     const commitsListLink = workflowContext.pull_request.commits_url;
@@ -15831,7 +15831,7 @@ async function getPullRequestCommitsOrFail(workflowContext) {
         for (var commit of commits) {
             commitsIdsArray.push(commit.sha);
         }
-        return commitsIdsArray;
+        return commitsIdsArray.toString();
     }
     catch (error) {
         console.error(error);
@@ -15839,7 +15839,7 @@ async function getPullRequestCommitsOrFail(workflowContext) {
     }
 }
 /**
-    Returns commits list of the last 10 commits on the master branch. Or fail.
+    Returns commits list string of the last 10 commits on the master branch. Or fail.
     This option is the default for all the events that aren't push or pull request.
  */
 async function getLastCommitsOrFail() {
@@ -15861,7 +15861,7 @@ async function getLastCommitsOrFail() {
         for (var commit of commits) {
             commitsIdsArray.push(commit.sha);
         }
-        return commitsIdsArray;
+        return commitsIdsArray.toString();
     }
     catch (error) {
         console.error(error);
