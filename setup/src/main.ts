@@ -141,7 +141,7 @@ async function getPullRequestCommitsOrFail(workflowContext: any): Promise<string
  */
 async function getLastCommitsOrFail(): Promise<string> {
     // try to get the last 10 commits on the current branch
-    const command = `git log --pretty=format:"%H" -10 | tr '\\n' ','`;
+    const command = `git log --pretty=format:"%H" -10`;
     console.log(command);
     let myOutput = '';
     let myError = '';
@@ -161,7 +161,7 @@ async function getLastCommitsOrFail(): Promise<string> {
 
     // return the command output if the command ran successfully 
     if (myError.length == 0) {
-        return myOutput.trim();
+        return myOutput.replace('\n', ',');
     } else {
         throw new Error(myError);
     }
