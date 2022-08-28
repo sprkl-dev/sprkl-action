@@ -140,28 +140,30 @@ async function getPullRequestCommitsOrFail(workflowContext: any): Promise<string
     This option is the default for all the events that aren't push or pull request.
  */
 async function getLastCommitsOrFail(): Promise<string> {
-    const repoOwner = github.context.repo.owner;
-    const repo = github.context.repo.repo
-    const url = `https://api.github.com/repos/${repoOwner}/${repo}/commits`
-    // try to get the last 10 commits on the master branch from Github API
-    try {
-        const {data, } = await axios.get(url, {
-            headers: {
-              Accept: 'application/json',
-            },
-            params: {
-                per_page: 10
-            },
-          },);
-        const commits = JSON.parse(JSON.stringify(data));
-        let commitsIdsArray: string[] = [];
-        for (var commit of commits) {
-            commitsIdsArray.push(commit.sha);
-        }
-        return commitsIdsArray.toString();
-    } catch(error) {
-        console.error(error);
-        process.exit(1);
+    // try to get the last 10 commits on the current branch
+    const command = `git log --pretty=format:"%H" -10 | tr '\\n' ','`;
+    console.log(command);
+    let myOutput = '';
+    let myError = '';
+
+    // set listeners for the command exec
+    const listeners = {
+    stdout: (data: Buffer) => {
+        myOutput += data.toString();
+    },
+    stderr: (data: Buffer) => {
+        myError += data.toString();
+    }
+    };
+
+    await exec.exec(command, [], {listeners: listeners});
+    console.log(myOutput);
+
+    // return the command output if the command ran successfully 
+    if (myError.length == 0) {
+        return myOutput.trim();
+    } else {
+        throw new Error(myError);
     }
 }
 
