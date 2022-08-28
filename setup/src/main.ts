@@ -13,6 +13,7 @@ import axios from 'axios';
     const analyze = core.getInput('analyze');
     const setEnv = core.getInput('setenv');
     const recipe = core.getInput('recipe');
+    const eventName = github.context.eventName;
 
 
     // run sprkl install command
@@ -20,8 +21,11 @@ import axios from 'axios';
     await exec.exec(installCmd);
 
     if (recipe === 'auto') {
-        // get commits list string for analysis
-        autoRecipe();
+        const envVarsToSet = await autoRecipe(eventName);
+        console.log(envVarsToSet);
+        for (let [key, value] of envVarsToSet){
+            core.exportVariable(key, value);
+        }
     } else {
         // set sprkl recipe environment variable
         core.exportVariable('SPRKL_RECIPE', recipe);
@@ -68,40 +72,42 @@ async function getSprklPrefixOrFail(): Promise<string> {
     } else {
         throw new Error(myError);
     }
-}
+} 
 
 /**
-    Set sprkl recipe environment variables depending on the workflow event(push, pull request or others).
+    Return map of env vars to set depending on the workflow event(push, pull request or others).
  */
-function autoRecipe() {
-    const eventName = github.context.eventName;
+export async function autoRecipe(eventName: string): Promise<Map<string, string| number>> {
     // get the workflow json which include all the data about the workflow
     const workflowContext = JSON.parse(JSON.stringify(github.context.payload, undefined, 2));
-
     if (eventName === 'push') {
-        pushRecipeCreation(workflowContext);
+        return getPushEnvVarsOrFail(workflowContext);
     } else if (eventName === 'pull_request') {
-        pullRequestRecipeCreation(workflowContext);
+        return await getPullRequestEnvVarsOrFail(workflowContext);
     } else {
-        // set the recipe to 'recent' recipe with last 10 commits
-        core.exportVariable('SPRKL_RECIPE', 'recent');
-        core.exportVariable('SPRKL_RECIPE_ATTRIBUTES.AMOUNT', 10);
+        // return 'recent' recipe with last 10 commits
+        let envVarsMap = new Map<string, string|number>();
+        envVarsMap.set('SPRKL_RECIPE', 'recent');
+        envVarsMap.set('SPRKL_RECIPE_ATTRIBUTES_AMOUNT', 10);
+        return envVarsMap;
     }
 }
 
 /**
-    Set sprkl to instrument all the commits in the push event. Or fail.
+    Return map of env vars to instrument all the commits in the push event. Or fail.
  */
-function pushRecipeCreation(workflowContext: any) {
+export function getPushEnvVarsOrFail(workflowContext: any): Map<string, string> {
     try {
         const commits = workflowContext.commits;
         let commitsIdsArray: string[] = [];
         for (var commit of commits) {
             commitsIdsArray.push(commit.id);
         }
-        // export environment variables for commitsList recipe 
-        core.exportVariable('SPRKL_RECIPE', 'commitsList');
-        core.exportVariable('SPRKL_COMMITS', commitsIdsArray.toString());
+        // return environment variables map for sprkl recipe
+        let envVarsMap = new Map<string, string>();
+        envVarsMap.set('SPRKL_RECIPE', 'commitsList');
+        envVarsMap.set('SPRKL_COMMITS', commitsIdsArray.toString());
+        return envVarsMap;
     } catch(error) {
         console.error(error);
         process.exit(1);
@@ -111,9 +117,9 @@ function pushRecipeCreation(workflowContext: any) {
 
 
 /**
-    Set sprkl to instrument all the commits in the pull request event. Or fail.
+    Return map of env vars to instrument all the commits in the pull request event. Or fail.
  */
-async function pullRequestRecipeCreation(workflowContext: any) {
+export async function getPullRequestEnvVarsOrFail(workflowContext: any): Promise<Map<string, string>> {
     const commitsListLink = workflowContext.pull_request.commits_url;
     // try to get the commits ids list of the pull request from the given Github API url
     try {
@@ -130,9 +136,11 @@ async function pullRequestRecipeCreation(workflowContext: any) {
         for (var commit of commits) {
             commitsIdsArray.push(commit.sha);
         }
-        // export environment variables for commitsList recipe 
-        core.exportVariable('SPRKL_RECIPE', 'commitsList');
-        core.exportVariable('SPRKL_COMMITS', commitsIdsArray.toString());
+        // return environment variables map for sprkl recipe
+        let envVarsMap = new Map<string, string>();
+        envVarsMap.set('SPRKL_RECIPE', 'commitsList');
+        envVarsMap.set('SPRKL_COMMITS', commitsIdsArray.toString());
+        return envVarsMap;
     } catch(error) {
         console.error(error);
         process.exit(1);
