@@ -20,7 +20,7 @@ inputs:
   recipe:
     required: false
     description: ""
-    default: commitsList
+    default: auto
 
 runs:
   using: "node16"
