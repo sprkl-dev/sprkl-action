@@ -16905,16 +16905,16 @@ const axios_1 = __importDefault(__nccwpck_require__(6545));
     const analyze = core.getInput('analyze');
     const setEnv = core.getInput('setenv');
     const recipe = core.getInput('recipe');
-    // set sprkl recipe environment variable, by default if there isn't input, the recipe is commitsList
-    core.exportVariable('SPRKL_RECIPE', recipe);
     // run sprkl install command
     const installCmd = `npx @sprkl/scripts@${sprklVersion} install`;
     await exec.exec(installCmd);
-    if (recipe === 'commitsList') {
+    if (recipe === 'auto') {
         // get commits list string for analysis
-        const commitsListString = await createCommitsList();
-        // export environment variables for commitsList recipe 
-        core.exportVariable('SPRKL_COMMITS', commitsListString);
+        autoRecipe();
+    }
+    else {
+        // set sprkl recipe environment variable
+        core.exportVariable('SPRKL_RECIPE', recipe);
     }
     // run sprkl analysis if requested
     if (analyze === 'true') {
@@ -16954,33 +16954,37 @@ async function getSprklPrefixOrFail() {
     }
 }
 /**
-    Returns commits list string depending on the workflow event(push, pull request or others).
+    Set sprkl recipe environment variables depending on the workflow event(push, pull request or others).
  */
-async function createCommitsList() {
+function autoRecipe() {
     const eventName = github.context.eventName;
     // get the workflow json which include all the data about the workflow
     const workflowContext = JSON.parse(JSON.stringify(github.context.payload, undefined, 2));
     if (eventName === 'push') {
-        return getPushCommitsOrFail(workflowContext);
+        pushRecipeCreation(workflowContext);
     }
     else if (eventName === 'pull_request') {
-        return await getPullRequestCommitsOrFail(workflowContext);
+        pullRequestRecipeCreation(workflowContext);
     }
     else {
-        return await getLastCommitsOrFail();
+        // set the recipe to 'recent' recipe with last 10 commits
+        core.exportVariable('SPRKL_RECIPE', 'recent');
+        core.exportVariable('SPRKL_RECIPE_ATTRIBUTES.AMOUNT', 10);
     }
 }
 /**
-    Returns commits list string of all the commits in a push event. Or fail.
+    Set sprkl to instrument all the commits in the push event. Or fail.
  */
-function getPushCommitsOrFail(workflowContext) {
+function pushRecipeCreation(workflowContext) {
     try {
         const commits = workflowContext.commits;
         let commitsIdsArray = [];
         for (var commit of commits) {
             commitsIdsArray.push(commit.id);
         }
-        return commitsIdsArray.toString();
+        // export environment variables for commitsList recipe 
+        core.exportVariable('SPRKL_RECIPE', 'commitsList');
+        core.exportVariable('SPRKL_COMMITS', commitsIdsArray.toString());
     }
     catch (error) {
         console.error(error);
@@ -16988,9 +16992,9 @@ function getPushCommitsOrFail(workflowContext) {
     }
 }
 /**
-    Returns commits list string of all the commits in a pull request event. Or fail.
+    Set sprkl to instrument all the commits in the pull request event. Or fail.
  */
-async function getPullRequestCommitsOrFail(workflowContext) {
+async function pullRequestRecipeCreation(workflowContext) {
     const commitsListLink = workflowContext.pull_request.commits_url;
     // try to get the commits ids list of the pull request from the given Github API url
     try {
@@ -17007,40 +17011,13 @@ async function getPullRequestCommitsOrFail(workflowContext) {
         for (var commit of commits) {
             commitsIdsArray.push(commit.sha);
         }
-        return commitsIdsArray.toString();
+        // export environment variables for commitsList recipe 
+        core.exportVariable('SPRKL_RECIPE', 'commitsList');
+        core.exportVariable('SPRKL_COMMITS', commitsIdsArray.toString());
     }
     catch (error) {
         console.error(error);
         process.exit(1);
-    }
-}
-/**
-    Returns commits list string of the last 10 commits on the master branch. Or fail.
-    This option is the default for all the events that aren't push or pull request.
- */
-async function getLastCommitsOrFail() {
-    // try to get the last 10 commits on the current branch
-    const command = `git log --pretty=format:"%H" -10`;
-    console.log(command);
-    let myOutput = '';
-    let myError = '';
-    // set listeners for the command exec
-    const listeners = {
-        stdout: (data) => {
-            myOutput += data.toString();
-        },
-        stderr: (data) => {
-            myError += data.toString();
-        }
-    };
-    await exec.exec(command, [], { listeners: listeners });
-    console.log(myOutput);
-    // return the command output if the command ran successfully 
-    if (myError.length == 0) {
-        return myOutput.replace('\n', ',');
-    }
-    else {
-        throw new Error(myError);
     }
 }
 
