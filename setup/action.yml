@@ -17,6 +17,10 @@ inputs:
     required: false
     description: ""
     default: 0.0.38
+  recipe:
+    required: false
+    description: ""
+    default: auto
 
 runs:
   using: "node16"
