@@ -3,6 +3,7 @@ import * as exec from '@actions/exec';
 import * as github from '@actions/github';
 import axios from 'axios';
 
+const SPRKL_RECIPES = ['auto', 'uncommitted', 'mine', 'recent', 'all', 'lastPush', 'commitsList'];
 
 if (require.main === module) {
     main();
@@ -19,18 +20,22 @@ async function main() {
     const recipe = core.getInput('recipe');
     const eventName = github.context.eventName;
 
+    // validate the inputs from the action user(only analyze, setEnv and recipe. No vaildation for sprklVersion)
+    validateInputOrFail(analyze, setEnv, recipe);
 
     // run sprkl install command
     const installCmd = `npx @sprkl/scripts@${sprklVersion} install`;
     await exec.exec(installCmd);
 
     if (recipe === 'auto') {
+        // get environment variables to set based on the event(SPRKL_RECIPE and more env vars based on recipe)
         const envVarsToSet = await autoRecipe(eventName);
+        // set all the environment variables in the recieved list
         for (let [key, value] of envVarsToSet){
             core.exportVariable(key, value);
         }
     } else {
-        // set sprkl recipe environment variable
+        // set sprkl recipe environment variable based on input
         core.exportVariable('SPRKL_RECIPE', recipe);
     }
     
@@ -149,5 +154,21 @@ export async function getPullRequestEnvVarsOrFail(workflowContext: any): Promise
         process.exit(1);
     }
     
+}
+
+/**
+    Validates the input from the action user
+ */
+function validateInputOrFail(analyze: string, setEnv: string, recipe: string) {
+    if (!(['true', 'false'].includes(analyze))){
+        throw new Error(`The input ${analyze} for the analyze param is not boolean`)
+    } 
+    if (!(['true', 'false'].includes(setEnv))){
+        throw new Error(`The input ${analyze} for the analyze param is not boolean`)
+    }
+    if (!(SPRKL_RECIPES.includes(recipe))) {
+        throw new Error(`The received recipe input: ${recipe} doesn't exist.
+The available recipes are: ${SPRKL_RECIPES}`)
+    }
 }
 
