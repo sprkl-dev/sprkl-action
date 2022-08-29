@@ -26,7 +26,6 @@ async function main() {
 
     if (recipe === 'auto') {
         const envVarsToSet = await autoRecipe(eventName);
-        console.log(envVarsToSet);
         for (let [key, value] of envVarsToSet){
             core.exportVariable(key, value);
         }
