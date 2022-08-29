@@ -16897,10 +16897,13 @@ const core = __importStar(__nccwpck_require__(2186));
 const exec = __importStar(__nccwpck_require__(1514));
 const github = __importStar(__nccwpck_require__(5438));
 const axios_1 = __importDefault(__nccwpck_require__(6545));
+if (require.main === require.cache[eval('__filename')]) {
+    main();
+}
 /**
     Setup sprkl function.
  */
-(async () => {
+async function main() {
     // get the input values from the action
     const sprklVersion = core.getInput('version');
     const analyze = core.getInput('analyze');
@@ -16932,7 +16935,7 @@ const axios_1 = __importDefault(__nccwpck_require__(6545));
         core.exportVariable('NODE_OPTIONS', '-r @sprkl/obs');
         core.exportVariable('NODE_PATH', `${sprklPrefix}/lib/node_modules`);
     }
-})();
+}
 /**
     Returns sprkl prefix.
  */

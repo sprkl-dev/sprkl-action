@@ -4,10 +4,14 @@ import * as github from '@actions/github';
 import axios from 'axios';
 
 
+if (require.main === module) {
+    main();
+}
+
 /**
     Setup sprkl function.
  */
-(async () => {
+async function main() {
     // get the input values from the action
     const sprklVersion = core.getInput('version');
     const analyze = core.getInput('analyze');
@@ -44,7 +48,7 @@ import axios from 'axios';
         core.exportVariable('NODE_OPTIONS','-r @sprkl/obs');
         core.exportVariable('NODE_PATH', `${sprklPrefix}/lib/node_modules`);
     }
-})();
+}
 
 /**
     Returns sprkl prefix.
