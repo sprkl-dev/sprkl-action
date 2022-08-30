@@ -2,8 +2,10 @@ import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import * as github from '@actions/github';
 import axios from 'axios';
+import type { WebhookPayload } from '@actions/github/lib/interfaces';
 
 const SPRKL_RECIPES = ['auto', 'uncommitted', 'mine', 'recent', 'all', 'lastPush', 'commitsList'];
+const PR_COMMITS_AMOUNT = 100;
 
 if (require.main === module) {
     main();
@@ -19,6 +21,8 @@ async function main() {
     const setEnv = core.getInput('setenv');
     const recipe = core.getInput('recipe');
     const eventName = github.context.eventName;
+    // get the workflow json which include all the data about the workflow
+    const workflowPayload = github.context.payload;
 
     // validate the inputs from the action user(only analyze, setEnv and recipe. No vaildation for sprklVersion)
     validateInputOrFail(analyze, setEnv, recipe);
@@ -29,7 +33,7 @@ async function main() {
 
     if (recipe === 'auto') {
         // get environment variables to set based on the event(SPRKL_RECIPE and more env vars based on recipe)
-        const envVarsToSet = await autoRecipe(eventName);
+        const envVarsToSet = await getRecipeEnv(eventName, workflowPayload);
         // set all the environment variables in the recieved list
         for (let [key, value] of envVarsToSet){
             core.exportVariable(key, value);
@@ -85,13 +89,11 @@ async function getSprklPrefixOrFail(): Promise<string> {
 /**
     Return map of env vars to set depending on the workflow event(push, pull request or others).
  */
-export async function autoRecipe(eventName: string): Promise<Map<string, string| number>> {
-    // get the workflow json which include all the data about the workflow
-    const workflowContext = JSON.parse(JSON.stringify(github.context.payload, undefined, 2));
-    if (eventName === 'push') {
-        return getPushEnvVarsOrFail(workflowContext);
-    } else if (eventName === 'pull_request') {
-        return await getPullRequestEnvVarsOrFail(workflowContext);
+export async function getRecipeEnv(eventName: string, workflowPayload: WebhookPayload): Promise<Map<string, string | number>> {
+    if (eventName === 'push' && workflowPayload.commits) {
+        return getPushEnvVarsOrFail(workflowPayload);
+    } else if (eventName === 'pull_request' && workflowPayload.pull_request) {
+        return await getPullRequestEnvVarsOrFail(workflowPayload.pull_request.commits_url);
     } else {
         // return 'recent' recipe with last 10 commits
         let envVarsMap = new Map<string, string|number>();
@@ -104,13 +106,11 @@ export async function autoRecipe(eventName: string): Promise<Map<string, string|
 /**
     Return map of env vars to instrument all the commits in the push event. Or fail.
  */
-export function getPushEnvVarsOrFail(workflowContext: any): Map<string, string> {
+export function getPushEnvVarsOrFail(workflowPayload: WebhookPayload): Map<string, string> {
     try {
-        const commits = workflowContext.commits;
-        let commitsIdsArray: string[] = [];
-        for (var commit of commits) {
-            commitsIdsArray.push(commit.id);
-        }
+        const commits = workflowPayload.commits;
+        const commitsIdsArray = commits.map((commit: { id: string; }) => commit.id);
+        console.log(commitsIdsArray);
         // return environment variables map for sprkl recipe
         let envVarsMap = new Map<string, string>();
         envVarsMap.set('SPRKL_RECIPE', 'commitsList');
@@ -127,23 +127,18 @@ export function getPushEnvVarsOrFail(workflowContext: any): Map<string, string> 
 /**
     Return map of env vars to instrument all the commits in the pull request event. Or fail.
  */
-export async function getPullRequestEnvVarsOrFail(workflowContext: any): Promise<Map<string, string>> {
-    const commitsListLink = workflowContext.pull_request.commits_url;
+export async function getPullRequestEnvVarsOrFail(commitsListUrl: string): Promise<Map<string, string>> {
     // try to get the commits ids list of the pull request from the given Github API url
     try {
-        const {data, } = await axios.get(commitsListLink, {
+        const {data, } = await axios.get(commitsListUrl, {
             headers: {
-              Accept: 'application/json',
+            Accept: 'application/json',
             },
             params: {
-                per_page: 100
+                per_page: PR_COMMITS_AMOUNT
             },
-          },);
-        const commits = JSON.parse(JSON.stringify(data));
-        let commitsIdsArray: string[] = [];
-        for (var commit of commits) {
-            commitsIdsArray.push(commit.sha);
-        }
+        },);
+        const commitsIdsArray = data.map((commit: { sha: string; }) => commit.sha);
         // return environment variables map for sprkl recipe
         let envVarsMap = new Map<string, string>();
         envVarsMap.set('SPRKL_RECIPE', 'commitsList');
@@ -153,8 +148,8 @@ export async function getPullRequestEnvVarsOrFail(workflowContext: any): Promise
         console.error(error);
         process.exit(1);
     }
-    
 }
+
 
 /**
     Validates the input from the action user
