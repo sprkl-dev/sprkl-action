@@ -16897,8 +16897,17 @@ const core = __importStar(__nccwpck_require__(2186));
 const exec = __importStar(__nccwpck_require__(1514));
 const github = __importStar(__nccwpck_require__(5438));
 const axios_1 = __importDefault(__nccwpck_require__(6545));
-const SPRKL_RECIPES = ['auto', 'uncommitted', 'mine', 'recent', 'all', 'lastPush', 'commitsList'];
-const PR_COMMITS_AMOUNT = 100;
+// commitsList recipe isn't here because the user of the action cannot define the list of commits
+const POSSIBLE_INPUT_RECIPES = [
+    "auto",
+    "uncommitted",
+    "mine",
+    "recent",
+    "all",
+    "lastPush",
+];
+//amount limit of commits to ask from the github api
+const PR_COMMITS_AMOUNT_LIMIT = 100;
 if (require.main === require.cache[eval('__filename')]) {
     main();
 }
@@ -16906,50 +16915,52 @@ if (require.main === require.cache[eval('__filename')]) {
     Setup sprkl function.
  */
 async function main() {
-    // get the input values from the action
-    const sprklVersion = core.getInput('version');
-    const analyze = core.getInput('analyze');
-    const setEnv = core.getInput('setenv');
-    const recipe = core.getInput('recipe');
+    // get the input values from the action and make the InputsObj
+    const inputsObj = {
+        sprklVersion: core.getInput("version"),
+        analyze: core.getInput("analyze"),
+        setEnv: core.getInput("setenv"),
+        recipe: core.getInput("recipe"),
+    };
     const eventName = github.context.eventName;
     // get the workflow json which include all the data about the workflow
     const workflowPayload = github.context.payload;
     // validate the inputs from the action user(only analyze, setEnv and recipe. No vaildation for sprklVersion)
-    validateInputOrFail(analyze, setEnv, recipe);
+    validateInputOrFail(inputsObj);
     // run sprkl install command
-    const installCmd = `npx @sprkl/scripts@${sprklVersion} install`;
+    const installCmd = `npx @sprkl/scripts@${inputsObj.sprklVersion} install`;
     await exec.exec(installCmd);
-    if (recipe === 'auto') {
+    if (inputsObj.recipe === "auto") {
         // get environment variables to set based on the event(SPRKL_RECIPE and more env vars based on recipe)
         const envVarsToSet = await getRecipeEnv(eventName, workflowPayload);
         // set all the environment variables in the recieved list
-        for (let [key, value] of envVarsToSet) {
+        for (const [key, value] of envVarsToSet) {
             core.exportVariable(key, value);
         }
     }
     else {
         // set sprkl recipe environment variable based on input
-        core.exportVariable('SPRKL_RECIPE', recipe);
+        core.exportVariable("SPRKL_RECIPE", inputsObj.recipe);
     }
     // run sprkl analysis if requested
-    if (analyze === 'true') {
-        await exec.exec('sprkl apply');
+    if (inputsObj.analyze === "true") {
+        await exec.exec("sprkl apply");
     }
     // set sprkl environment if requested
-    if (setEnv === 'true') {
+    if (inputsObj.setEnv === "true") {
         const sprklPrefix = await getSprklPrefixOrFail();
-        core.exportVariable('SPRKL_PREFIX', sprklPrefix);
-        core.exportVariable('NODE_OPTIONS', '-r @sprkl/obs');
-        core.exportVariable('NODE_PATH', `${sprklPrefix}/lib/node_modules`);
+        core.exportVariable("SPRKL_PREFIX", sprklPrefix);
+        core.exportVariable("NODE_OPTIONS", "-r @sprkl/obs");
+        core.exportVariable("NODE_PATH", `${sprklPrefix}/lib/node_modules`);
     }
 }
 /**
     Returns sprkl prefix.
  */
 async function getSprklPrefixOrFail() {
-    const command = 'sprkl config get prefix';
-    let myOutput = '';
-    let myError = '';
+    const command = "sprkl config get prefix";
+    let myOutput = "";
+    let myError = "";
     // set listeners for the command exec
     const listeners = {
         stdout: (data) => {
@@ -16957,10 +16968,10 @@ async function getSprklPrefixOrFail() {
         },
         stderr: (data) => {
             myError += data.toString();
-        }
+        },
     };
     await exec.exec(command, [], { listeners: listeners });
-    // return the command output if the command ran successfully 
+    // return the command output if the command ran successfully
     if (myError.length == 0) {
         return myOutput.trim();
     }
@@ -16972,17 +16983,17 @@ async function getSprklPrefixOrFail() {
     Return map of env vars to set depending on the workflow event(push, pull request or others).
  */
 async function getRecipeEnv(eventName, workflowPayload) {
-    if (eventName === 'push' && workflowPayload.commits) {
+    if (eventName === "push" && workflowPayload.commits) {
         return getPushEnvVarsOrFail(workflowPayload);
     }
-    else if (eventName === 'pull_request' && workflowPayload.pull_request) {
+    else if (eventName === "pull_request" && workflowPayload.pull_request) {
         return await getPullRequestEnvVarsOrFail(workflowPayload.pull_request.commits_url);
     }
     else {
         // return 'recent' recipe with last 10 commits
-        let envVarsMap = new Map();
-        envVarsMap.set('SPRKL_RECIPE', 'recent');
-        envVarsMap.set('SPRKL_RECIPE_ATTRIBUTES_AMOUNT', 10);
+        const envVarsMap = new Map();
+        envVarsMap.set("SPRKL_RECIPE", "recent");
+        envVarsMap.set("SPRKL_RECIPE_ATTRIBUTES_AMOUNT", 10);
         return envVarsMap;
     }
 }
@@ -16994,11 +17005,10 @@ function getPushEnvVarsOrFail(workflowPayload) {
     try {
         const commits = workflowPayload.commits;
         const commitsIdsArray = commits.map((commit) => commit.id);
-        console.log(commitsIdsArray);
         // return environment variables map for sprkl recipe
-        let envVarsMap = new Map();
-        envVarsMap.set('SPRKL_RECIPE', 'commitsList');
-        envVarsMap.set('SPRKL_COMMITS', commitsIdsArray.toString());
+        const envVarsMap = new Map();
+        envVarsMap.set("SPRKL_RECIPE", "commitsList");
+        envVarsMap.set("SPRKL_COMMITS", commitsIdsArray.toString());
         return envVarsMap;
     }
     catch (error) {
@@ -17013,19 +17023,19 @@ exports.getPushEnvVarsOrFail = getPushEnvVarsOrFail;
 async function getPullRequestEnvVarsOrFail(commitsListUrl) {
     // try to get the commits ids list of the pull request from the given Github API url
     try {
-        const { data, } = await axios_1.default.get(commitsListUrl, {
+        const { data } = await axios_1.default.get(commitsListUrl, {
             headers: {
-                Accept: 'application/json',
+                Accept: "application/json",
             },
             params: {
-                per_page: PR_COMMITS_AMOUNT
+                per_page: PR_COMMITS_AMOUNT_LIMIT,
             },
         });
         const commitsIdsArray = data.map((commit) => commit.sha);
         // return environment variables map for sprkl recipe
-        let envVarsMap = new Map();
-        envVarsMap.set('SPRKL_RECIPE', 'commitsList');
-        envVarsMap.set('SPRKL_COMMITS', commitsIdsArray.toString());
+        const envVarsMap = new Map();
+        envVarsMap.set("SPRKL_RECIPE", "commitsList");
+        envVarsMap.set("SPRKL_COMMITS", commitsIdsArray.toString());
         return envVarsMap;
     }
     catch (error) {
@@ -17037,16 +17047,22 @@ exports.getPullRequestEnvVarsOrFail = getPullRequestEnvVarsOrFail;
 /**
     Validates the input from the action user
  */
-function validateInputOrFail(analyze, setEnv, recipe) {
-    if (!(['true', 'false'].includes(analyze))) {
-        throw new Error(`The input ${analyze} for the analyze param is not boolean`);
+function validateInputOrFail(inputsObj) {
+    if (!["true", "false"].includes(inputsObj.analyze)) {
+        throw new Error(`The input ${inputsObj.analyze} for the analyze param is not boolean`);
     }
-    if (!(['true', 'false'].includes(setEnv))) {
-        throw new Error(`The input ${analyze} for the analyze param is not boolean`);
+    if (!["true", "false"].includes(inputsObj.setEnv)) {
+        throw new Error(`The input ${inputsObj.analyze} for the analyze param is not boolean`);
     }
-    if (!(SPRKL_RECIPES.includes(recipe))) {
-        throw new Error(`The received recipe input: ${recipe} doesn't exist.
-The available recipes are: ${SPRKL_RECIPES}`);
+    // TODO: maybe give the user an option to input commitsList in the action
+    if (inputsObj.recipe === "commitsList") {
+        throw new Error(`The received recipe input: ${inputsObj.recipe} isn't possible.
+The available recipes are: ${POSSIBLE_INPUT_RECIPES}`);
+    }
+    // TODO: do this validation in the CLI(currently falling back to dafualt)
+    if (!POSSIBLE_INPUT_RECIPES.includes(inputsObj.recipe)) {
+        throw new Error(`The received recipe input: ${inputsObj.recipe} doesn't exist.
+The available recipes are: ${POSSIBLE_INPUT_RECIPES}`);
     }
 }
 

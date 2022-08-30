@@ -7,7 +7,8 @@
     "build": "npm run build:main && npm run build:post",
     "build:main": "ncc build src/main.ts --source-map --out dist/main",
     "build:post": "ncc build src/post.ts --source-map --out dist/post",
-    "test": "jest"
+    "test": "jest",
+    "lint": "eslint . --ext .ts"
   },
   "keywords": [],
   "dependencies": {
@@ -19,8 +20,14 @@
   "devDependencies": {
     "@types/jest": "^28.1.8",
     "@types/node": "^18.7.8",
+    "@typescript-eslint/eslint-plugin": "^5.36.0",
+    "@typescript-eslint/parser": "^5.36.0",
     "@vercel/ncc": "^0.34.0",
+    "eslint": "^8.23.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.2.1",
     "jest": "^28.1.3",
+    "prettier": "^2.7.1",
     "ts-jest": "^28.0.8",
     "typescript": "^4.7.4"
   }
