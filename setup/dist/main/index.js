@@ -16921,6 +16921,7 @@ async function main() {
         analyze: core.getInput("analyze"),
         setEnv: core.getInput("setenv"),
         recipe: core.getInput("recipe"),
+        analysis_cwd: core.getInput("analysis_cwd"),
     };
     const eventName = github.context.eventName;
     // get the workflow json which include all the data about the workflow
@@ -16944,7 +16945,12 @@ async function main() {
     }
     // run sprkl analysis if requested
     if (inputsObj.analyze === "true") {
-        await exec.exec("sprkl apply");
+        if (inputsObj.analysis_cwd === "") {
+            await exec.exec("sprkl apply");
+        }
+        else {
+            await exec.exec("sprkl apply", [], { cwd: inputsObj.analysis_cwd });
+        }
     }
     // set sprkl environment if requested
     if (inputsObj.setEnv === "true") {
