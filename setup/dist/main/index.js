@@ -16921,12 +16921,12 @@ async function main() {
         analyze: core.getInput("analyze"),
         setEnv: core.getInput("setenv"),
         recipe: core.getInput("recipe"),
-        analysis_cwd: core.getInput("analysis_cwd"),
+        analysisCwd: core.getInput("analysisCwd"),
     };
     const eventName = github.context.eventName;
     // get the workflow json which include all the data about the workflow
     const workflowPayload = github.context.payload;
-    // validate the inputs from the action user(only analyze, setEnv and recipe. No vaildation for sprklVersion)
+    // validate the inputs from the action user(only analyze, setEnv and recipe. No vaildation for sprklVersion and analysisCwd)
     validateInputOrFail(inputsObj);
     // run sprkl install command
     const installCmd = `npx @sprkl/scripts@${inputsObj.sprklVersion} install`;
@@ -16945,11 +16945,11 @@ async function main() {
     }
     // run sprkl analysis if requested
     if (inputsObj.analyze === "true") {
-        if (inputsObj.analysis_cwd === "") {
+        if (inputsObj.analysisCwd === "") {
             await exec.exec("sprkl apply");
         }
         else {
-            await exec.exec("sprkl apply", [], { cwd: inputsObj.analysis_cwd });
+            await exec.exec("sprkl apply", [], { cwd: inputsObj.analysisCwd });
         }
     }
     // set sprkl environment if requested

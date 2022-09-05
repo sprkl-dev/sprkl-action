@@ -21,7 +21,7 @@ inputs:
     required: false
     description: "choose which code changes to analyze with sprkl"
     default: auto
-  analysis_cwd:
+  analysisCwd:
     required: false
     description: "choose where to run sprkl analysis"
     default: ""
