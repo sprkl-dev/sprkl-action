@@ -20,6 +20,12 @@ then
   exit 1
 fi
 
+if [[ $(git rev-parse --abbrev-ref HEAD) != master ]];
+then
+  echo "Can only version-bump from the master branch."
+  exit 1
+fi
+
 if [[ ! -z $(git status -s) ]]; then
   echo "There are uncommitted changes, please make sure everything is committed."
   exit 1
