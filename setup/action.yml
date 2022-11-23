@@ -16,7 +16,7 @@ inputs:
   version:
     required: false
     description: ""
-    default: 0.0.49
+    default: 0.0.50
   recipe:
     required: false
     description: "choose which code changes to analyze with sprkl"
