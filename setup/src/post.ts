@@ -1,7 +1,7 @@
 import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import * as github from '@actions/github';
-import { existsSync, readFileSync } from 'fs';
+import {existsSync, readFileSync} from 'fs';
 /**
  Push sprkl state to CI platfrom at the end of the job
  */
@@ -12,12 +12,10 @@ import { existsSync, readFileSync } from 'fs';
     const githubRunId = github.context.runId
     const headSha = getHeadCommitSha();
 
-    // push sprkl state to CI platfrom
-    const sprklPushDataCmd = `sprkl ci push snapshot --token=${token} --repository=${githubRepository} --run=${githubRunId}`
-    const sprklPushDashboardCmd = `sprkl ci push dashboard --token=${token} --repository=${githubRepository} --run=${githubRunId} --headSha=${headSha}`
+    // push sprkl state to CI platfrom (dashboard, snapshot and sysgraph)
+    const sprklPushStateCmd = `sprkl ci push --token=${token} --repository=${githubRepository} --run=${githubRunId} --headSha=${headSha}`
 
-    await exec.exec(sprklPushDataCmd);
-    await exec.exec(sprklPushDashboardCmd);
+    await exec.exec(sprklPushStateCmd);
 })();
 
 function getHeadCommitSha(): string {

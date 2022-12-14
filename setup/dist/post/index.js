@@ -10796,11 +10796,9 @@ const fs_1 = __nccwpck_require__(7147);
     const githubRepository = `${github.context.repo.owner}/${github.context.repo.repo}`;
     const githubRunId = github.context.runId;
     const headSha = getHeadCommitSha();
-    // push sprkl state to CI platfrom
-    const sprklPushDataCmd = `sprkl ci push snapshot --token=${token} --repository=${githubRepository} --run=${githubRunId}`;
-    const sprklPushDashboardCmd = `sprkl ci push dashboard --token=${token} --repository=${githubRepository} --run=${githubRunId} --headSha=${headSha}`;
-    await exec.exec(sprklPushDataCmd);
-    await exec.exec(sprklPushDashboardCmd);
+    // push sprkl state to CI platfrom (dashboard, snapshot and sysgraph)
+    const sprklPushStateCmd = `sprkl ci push --token=${token} --repository=${githubRepository} --run=${githubRunId} --headSha=${headSha}`;
+    await exec.exec(sprklPushStateCmd);
 })();
 function getHeadCommitSha() {
     const eventPath = process.env['GITHUB_EVENT_PATH'];
