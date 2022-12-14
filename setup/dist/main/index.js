@@ -16929,7 +16929,7 @@ async function main() {
     // validate the inputs from the action user(only analyze, setEnv and recipe. No vaildation for sprklVersion and analysisCwd)
     validateInputOrFail(inputsObj);
     // run sprkl install command
-    const installCmd = `npx @sprkl/scripts@${inputsObj.sprklVersion} install`;
+    const installCmd = `npx @sprkl/scripts@${inputsObj.sprklVersion} install --rewrite-global-links=true`;
     await exec.exec(installCmd);
     if (inputsObj.recipe === "auto") {
         // get environment variables to set based on the event(SPRKL_RECIPE and more env vars based on recipe)
