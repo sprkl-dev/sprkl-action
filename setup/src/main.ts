@@ -48,7 +48,7 @@ async function main() {
   validateInputOrFail(inputsObj);
 
   // run sprkl install command
-  const installCmd = `npx @sprkl/scripts@${inputsObj.sprklVersion} install --rewrite-global-links=true`;
+  const installCmd = `npx @sprkl/scripts@${inputsObj.sprklVersion} install --rewrite-global-links=true --docker-enable=true`;
   await exec.exec(installCmd);
 
   if (inputsObj.recipe === "auto") {
