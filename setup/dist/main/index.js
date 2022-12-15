@@ -16906,6 +16906,7 @@ const POSSIBLE_INPUT_RECIPES = [
     "all",
     "lastPush",
 ];
+const GITHUB_ACTION_ID = "xghaction";
 //amount limit of commits to ask from the github api
 const PR_COMMITS_AMOUNT_LIMIT = 100;
 if (require.main === require.cache[eval('__filename')]) {
@@ -16929,7 +16930,7 @@ async function main() {
     // validate the inputs from the action user(only analyze, setEnv and recipe. No vaildation for sprklVersion and analysisCwd)
     validateInputOrFail(inputsObj);
     // run sprkl install command
-    const installCmd = `npx @sprkl/scripts@${inputsObj.sprklVersion} install --rewrite-global-links=true --docker-enable=true`;
+    const installCmd = `npx @sprkl/scripts@${inputsObj.sprklVersion} install --id=${GITHUB_ACTION_ID} --rewrite-global-links=true --docker-enable=true`;
     await exec.exec(installCmd);
     if (inputsObj.recipe === "auto") {
         // get environment variables to set based on the event(SPRKL_RECIPE and more env vars based on recipe)

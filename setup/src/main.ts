@@ -14,6 +14,8 @@ const POSSIBLE_INPUT_RECIPES = [
   "lastPush",
 ];
 
+const GITHUB_ACTION_ID = "xghaction"
+
 interface Inputs {
   sprklVersion: string;
   analyze: string;
@@ -48,7 +50,7 @@ async function main() {
   validateInputOrFail(inputsObj);
 
   // run sprkl install command
-  const installCmd = `npx @sprkl/scripts@${inputsObj.sprklVersion} install --rewrite-global-links=true --docker-enable=true`;
+  const installCmd = `npx @sprkl/scripts@${inputsObj.sprklVersion} install --id=${GITHUB_ACTION_ID} --rewrite-global-links=true --docker-enable=true`;
   await exec.exec(installCmd);
 
   if (inputsObj.recipe === "auto") {
