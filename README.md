@@ -1,6 +1,10 @@
-# sprkl-action
+# Sprkl Action
 
+
+Further documentation and guidelines are maintained on our [docs](https://docs.sprkl.dev/documentations/sprkl-for-github-actions).
 ## Usage
+
+### Setup Sprkl in your workflow
 
 Add the following step to make `sprkl` CLI available in your workflow:
 
