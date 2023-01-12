@@ -15,7 +15,7 @@ Add the following step to make `sprkl` CLI available in your workflow:
           token: ${{ secrets.SPRKL_GITHUB_ACTIONS_TOKEN }}
 ```
 
-**Note**, since `sprkl` analyzes your git history during the workflow, make sure to include it in your action by setting under `fetch-depth: 0` under `actions/checkout`:
+**Note**: Since Sprkl analyzes your git history during the workflow, make sure to include it in your action by setting under `fetch-depth: 0` under `actions/checkout`:
 ```yaml
       - uses: actions/checkout@v3
         with:
