@@ -6,7 +6,7 @@ Further documentation and guidelines are maintained on our [docs](https://docs.s
 
 ### Setup Sprkl in your workflow
 
-Add the following step to make `sprkl` CLI available in your workflow:
+Add the following step to make [Sprkl CLI](https://docs.sprkl.dev/documentations/getting-started/instrument-your-code) available in your workflow:
 
 ```yaml
       - name: Sprkl Setup
@@ -15,7 +15,7 @@ Add the following step to make `sprkl` CLI available in your workflow:
           token: ${{ secrets.SPRKL_GITHUB_ACTIONS_TOKEN }}
 ```
 
-**Note**: Since Sprkl analyzes your git history during the workflow, make sure to include it in your action by setting under `fetch-depth: 0` under `actions/checkout`:
+**Note**: Since Sprkl analyzes your git history during the workflow, make sure to include it in your action by setting under `fetch-depth: 0` under [actions/checkout](https://github.com/actions/checkout):
 ```yaml
       - uses: actions/checkout@v3
         with:
