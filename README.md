@@ -14,8 +14,7 @@ Add the following step to make [Sprkl CLI](https://docs.sprkl.dev/documentations
         with:
           token: ${{ secrets.SPRKL_GITHUB_ACTIONS_TOKEN }}
 ```
-
-**Note**: Since Sprkl analyzes your git history during the workflow, make sure to include it in your action by setting `fetch-depth: 0` under [actions/checkout](https://github.com/actions/checkout):
+Since Sprkl analyzes your git history ([Why?](https://docs.sprkl.dev/documentations/concepts)) during the workflow, so make sure to include it in your action by setting `fetch-depth: 0` in [actions/checkout](https://github.com/actions/checkout):
 ```yaml
       - uses: actions/checkout@v3
         with:
@@ -27,7 +26,6 @@ Add the following step to make [Sprkl CLI](https://docs.sprkl.dev/documentations
           token: ${{ secrets.SPRKL_GITHUB_ACTIONS_TOKEN }}
 
 ```
-> Read more about [`fetch-depth`](https://github.com/actions/checkout)
 
 Follow the [example action](https://github.com/sprkl-dev/use-sprkl/blob/ci/.github/workflows/ci.yml) in sprkl microservices example repository.
 
