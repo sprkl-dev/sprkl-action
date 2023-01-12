@@ -15,7 +15,7 @@ Add the following step to make [Sprkl CLI](https://docs.sprkl.dev/documentations
           token: ${{ secrets.SPRKL_GITHUB_ACTIONS_TOKEN }}
 ```
 
-**Note**: Since Sprkl analyzes your git history during the workflow, make sure to include it in your action by setting under `fetch-depth: 0` under [actions/checkout](https://github.com/actions/checkout):
+**Note**: Since Sprkl analyzes your git history during the workflow, make sure to include it in your action by setting `fetch-depth: 0` under [actions/checkout](https://github.com/actions/checkout):
 ```yaml
       - uses: actions/checkout@v3
         with:
