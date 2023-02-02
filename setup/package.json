@@ -1,6 +1,6 @@
 {
   "name": "@sprkl/action-setup",
-  "version": "0.0.63",
+  "version": "0.0.64",
   "description": "",
   "main": "index.js",
   "scripts": {
