@@ -22,6 +22,7 @@ interface Inputs {
   setEnv: string;
   recipe: string;
   analysisCwd: string;
+  githubToken: string;
 }
 //amount limit of commits to ask from the github api
 const PR_COMMITS_AMOUNT_LIMIT = 100;
@@ -41,6 +42,7 @@ async function main() {
     setEnv: core.getInput("setenv"),
     recipe: core.getInput("recipe"),
     analysisCwd: core.getInput("analysisCwd"),
+    githubToken: core.getInput("githubToken"),
   };
   const eventName = github.context.eventName;
   // get the workflow json which include all the data about the workflow
@@ -55,7 +57,7 @@ async function main() {
 
   if (inputsObj.recipe === "auto") {
     // get environment variables to set based on the event(SPRKL_RECIPE and more env vars based on recipe)
-    const envVarsToSet = await getRecipeEnv(eventName, workflowPayload);
+    const envVarsToSet = await getRecipeEnv(eventName, workflowPayload, inputsObj.githubToken);
     // set all the environment variables in the recieved list
     for (const [key, value] of envVarsToSet) {
       core.exportVariable(key, value);
@@ -117,13 +119,15 @@ async function getSprklPrefixOrFail(): Promise<string> {
  */
 export async function getRecipeEnv(
   eventName: string,
-  workflowPayload: WebhookPayload
+  workflowPayload: WebhookPayload,
+  githubToken: string
 ): Promise<Map<string, string | number>> {
   if (eventName === "push" && workflowPayload.commits) {
     return getPushEnvVarsOrFail(workflowPayload);
   } else if (eventName === "pull_request" && workflowPayload.pull_request) {
     return await getPullRequestEnvVarsOrFail(
-      workflowPayload.pull_request.commits_url
+      workflowPayload.pull_request.commits_url,
+      githubToken
     );
   } else {
     // return 'recent' recipe with last 10 commits
@@ -158,12 +162,14 @@ export function getPushEnvVarsOrFail(
     Return map of env vars to instrument all the commits in the pull request event. Or fail.
  */
 export async function getPullRequestEnvVarsOrFail(
-  commitsListUrl: string
+  commitsListUrl: string,
+  githubToken: string
 ): Promise<Map<string, string>> {
   // try to get the commits ids list of the pull request from the given Github API url
   try {
     const { data } = await axios.get(commitsListUrl, {
       headers: {
+        Authorization: `Bearer ${githubToken}`,
         Accept: "application/json",
       },
       params: {
@@ -171,6 +177,7 @@ export async function getPullRequestEnvVarsOrFail(
       },
     });
     const commitsIdsArray = data.map((commit: { sha: string }) => commit.sha);
+    console.log(`trying to get commits of PR, amout:`, {"count": commitsIdsArray.length});
     // return environment variables map for sprkl recipe
     const envVarsMap = new Map<string, string>();
     envVarsMap.set("SPRKL_RECIPE", "commitsList");
@@ -194,6 +201,11 @@ function validateInputOrFail(inputsObj: Inputs) {
   if (!["true", "false"].includes(inputsObj.setEnv)) {
     throw new Error(
       `The input ${inputsObj.analyze} for the analyze param is not boolean`
+    );
+  }
+  if (inputsObj.githubToken.length == 0) {
+    throw new Error(
+      "Can't continue without valid Github token"
     );
   }
   // TODO: maybe give the user an option to input commitsList in the action

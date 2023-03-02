@@ -25,6 +25,10 @@ inputs:
     required: false
     description: "choose where to run sprkl analysis"
     default: ""
+  githubToken:
+    required: false
+    description: ""
+    default: ${{ github.token }}
 
 runs:
   using: "node16"
