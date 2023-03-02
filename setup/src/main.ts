@@ -171,7 +171,6 @@ export async function getPullRequestEnvVarsOrFail(
   const githubClient: ClientType = github.getOctokit(githubToken);
 
   try {
-    console.log("trying to fetch commits in pr ", prNumber);
     // try to get the commits ids list of the pull request from the given Github API url
     const { data } = await githubClient.rest.pulls.listCommits({
       owner: github.context.repo.owner,
