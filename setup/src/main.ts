@@ -27,6 +27,8 @@ interface Inputs {
 //amount limit of commits to ask from the github api
 const PR_COMMITS_AMOUNT_LIMIT = 100;
 
+type ClientType = ReturnType<typeof github.getOctokit>;
+
 if (require.main === module) {
   main();
 }
@@ -125,10 +127,7 @@ export async function getRecipeEnv(
   if (eventName === "push" && workflowPayload.commits) {
     return getPushEnvVarsOrFail(workflowPayload);
   } else if (eventName === "pull_request" && workflowPayload.pull_request) {
-    return await getPullRequestEnvVarsOrFail(
-      workflowPayload.pull_request.commits_url,
-      githubToken
-    );
+    return await getPullRequestEnvVarsOrFail(githubToken);
   } else {
     // return 'recent' recipe with last 10 commits
     const envVarsMap = new Map<string, string | number>();
@@ -162,20 +161,24 @@ export function getPushEnvVarsOrFail(
     Return map of env vars to instrument all the commits in the pull request event. Or fail.
  */
 export async function getPullRequestEnvVarsOrFail(
-  commitsListUrl: string,
   githubToken: string
 ): Promise<Map<string, string>> {
-  // try to get the commits ids list of the pull request from the given Github API url
+  const prNumber = getPrNumber();
+  if (!prNumber) {
+    console.log("couldn't get pull request number, exiting")
+    return new Map<string, string>()
+  }
+  const githubClient: ClientType = github.getOctokit(githubToken);
+
   try {
-    const { data } = await axios.get(commitsListUrl, {
-      headers: {
-        Authorization: `Bearer ${githubToken}`,
-        Accept: "application/json",
-      },
-      params: {
-        per_page: PR_COMMITS_AMOUNT_LIMIT,
-      },
-    });
+    // try to get the commits ids list of the pull request from the given Github API url
+    const { data } = await githubClient.rest.pulls.listCommits({
+      owner: github.context.repo.owner,
+      repo: github.context.repo.repo,
+      pull_number: prNumber,
+      per_page: PR_COMMITS_AMOUNT_LIMIT,
+    })
+
     const commitsIdsArray = data.map((commit: { sha: string }) => commit.sha);
     // return environment variables map for sprkl recipe
     const envVarsMap = new Map<string, string>();
@@ -217,4 +220,13 @@ The available recipes are: ${POSSIBLE_INPUT_RECIPES}`);
     throw new Error(`The received recipe input: ${inputsObj.recipe} doesn't exist.
 The available recipes are: ${POSSIBLE_INPUT_RECIPES}`);
   }
+}
+
+function getPrNumber(): number | undefined {
+  const pullRequest = github.context.payload.pull_request;
+  if (!pullRequest) {
+    return undefined;
+  }
+
+  return pullRequest.number;
 }
