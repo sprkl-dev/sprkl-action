@@ -177,7 +177,6 @@ export async function getPullRequestEnvVarsOrFail(
       },
     });
     const commitsIdsArray = data.map((commit: { sha: string }) => commit.sha);
-    console.log(`trying to get commits of PR, amout:`, {"count": commitsIdsArray.length});
     // return environment variables map for sprkl recipe
     const envVarsMap = new Map<string, string>();
     envVarsMap.set("SPRKL_RECIPE", "commitsList");
