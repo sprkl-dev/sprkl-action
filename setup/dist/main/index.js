@@ -10783,7 +10783,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getPullRequestEnvVarsOrFail = exports.getPushEnvVarsOrFail = exports.getRecipeEnv = void 0;
+exports.getPullRequestEnvVarsOrFail = exports.getPushEnvVarsOrFail = exports.getRecipeEnv = exports.PR_COMMITS_AMOUNT_LIMIT = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const exec = __importStar(__nccwpck_require__(1514));
 const github = __importStar(__nccwpck_require__(5438));
@@ -10798,7 +10798,7 @@ const POSSIBLE_INPUT_RECIPES = [
 ];
 const GITHUB_ACTION_ID = "xghaction";
 //amount limit of commits to ask from the github api
-const PR_COMMITS_AMOUNT_LIMIT = 100;
+exports.PR_COMMITS_AMOUNT_LIMIT = 100;
 if (require.main === require.cache[eval('__filename')]) {
     main();
 }
@@ -10816,26 +10816,26 @@ async function main() {
         githubToken: core.getInput("githubToken"),
     };
     const eventName = github.context.eventName;
-    // get the workflow json which include all the data about the workflow
+    // Get the workflow json which include all the data about the workflow
     const workflowPayload = github.context.payload;
-    // validate the inputs from the action user(only analyze, setEnv and recipe. No vaildation for sprklVersion and analysisCwd)
+    // Validate the inputs from the action user(only analyze, setEnv and recipe. No vaildation for sprklVersion and analysisCwd)
     validateInputOrFail(inputsObj);
-    // run sprkl install command
+    // Run sprkl install command
     const installCmd = `npx @sprkl/scripts@${inputsObj.sprklVersion} install --id=${GITHUB_ACTION_ID} --rewrite-global-links=true --docker-enable=true`;
     await exec.exec(installCmd);
     if (inputsObj.recipe === "auto") {
-        // get environment variables to set based on the event(SPRKL_RECIPE and more env vars based on recipe)
+        // Get environment variables to set based on the event(SPRKL_RECIPE and more env vars based on recipe)
         const envVarsToSet = await getRecipeEnv(eventName, workflowPayload, inputsObj.githubToken);
-        // set all the environment variables in the recieved list
+        // Set all the environment variables in the recieved list
         for (const [key, value] of envVarsToSet) {
             core.exportVariable(key, value);
         }
     }
     else {
-        // set sprkl recipe environment variable based on input
+        // Set sprkl recipe environment variable based on input
         core.exportVariable("SPRKL_RECIPE", inputsObj.recipe);
     }
-    // run sprkl analysis if requested
+    // Run sprkl analysis if requested
     if (inputsObj.analyze === "true") {
         if (inputsObj.analysisCwd === "") {
             await exec.exec("sprkl apply");
@@ -10844,7 +10844,7 @@ async function main() {
             await exec.exec("sprkl apply", [], { cwd: inputsObj.analysisCwd });
         }
     }
-    // set sprkl environment if requested
+    // Set sprkl environment if requested
     if (inputsObj.setEnv === "true") {
         const sprklPrefix = await getSprklPrefixOrFail();
         core.exportVariable("SPRKL_PREFIX", sprklPrefix);
@@ -10859,7 +10859,7 @@ async function getSprklPrefixOrFail() {
     const command = "sprkl config get prefix";
     let myOutput = "";
     let myError = "";
-    // set listeners for the command exec
+    // Set listeners for the command exec
     const listeners = {
         stdout: (data) => {
             myOutput += data.toString();
@@ -10869,7 +10869,7 @@ async function getSprklPrefixOrFail() {
         },
     };
     await exec.exec(command, [], { listeners: listeners });
-    // return the command output if the command ran successfully
+    // Return the command output if the command ran successfully
     if (myError.length == 0) {
         return myOutput.trim();
     }
@@ -10885,10 +10885,10 @@ async function getRecipeEnv(eventName, workflowPayload, githubToken) {
         return getPushEnvVarsOrFail(workflowPayload);
     }
     else if (eventName === "pull_request" && workflowPayload.pull_request) {
-        return await getPullRequestEnvVarsOrFail(githubToken);
+        return await getPullRequestEnvVarsOrFail(githubToken, workflowPayload.pull_request.number);
     }
     else {
-        // return 'recent' recipe with last 10 commits
+        // Return 'recent' recipe with last 10 commits
         const envVarsMap = new Map();
         envVarsMap.set("SPRKL_RECIPE", "recent");
         envVarsMap.set("SPRKL_RECIPE_ATTRIBUTES_AMOUNT", 10);
@@ -10903,7 +10903,7 @@ function getPushEnvVarsOrFail(workflowPayload) {
     try {
         const commits = workflowPayload.commits;
         const commitsIdsArray = commits.map((commit) => commit.id);
-        // return environment variables map for sprkl recipe
+        // Return environment variables map for sprkl recipe
         const envVarsMap = new Map();
         envVarsMap.set("SPRKL_RECIPE", "commitsList");
         envVarsMap.set("SPRKL_COMMITS", commitsIdsArray.toString());
@@ -10918,23 +10918,19 @@ exports.getPushEnvVarsOrFail = getPushEnvVarsOrFail;
 /**
     Return map of env vars to instrument all the commits in the pull request event. Or fail.
  */
-async function getPullRequestEnvVarsOrFail(githubToken) {
-    const prNumber = getPrNumber();
-    if (!prNumber) {
-        console.log("couldn't get pull request number, exiting");
-        return new Map();
-    }
+async function getPullRequestEnvVarsOrFail(githubToken, prNumber) {
+    // Create github octokit client using the github token input
     const githubClient = github.getOctokit(githubToken);
     try {
-        // try to get the commits ids list of the pull request from the given Github API url
+        // Try to get the commits ids list of the pull request using the github client
         const { data } = await githubClient.rest.pulls.listCommits({
             owner: github.context.repo.owner,
             repo: github.context.repo.repo,
             pull_number: prNumber,
-            per_page: PR_COMMITS_AMOUNT_LIMIT,
+            per_page: exports.PR_COMMITS_AMOUNT_LIMIT,
         });
         const commitsIdsArray = data.map((commit) => commit.sha);
-        // return environment variables map for sprkl recipe
+        // Return environment variables map for sprkl recipe
         const envVarsMap = new Map();
         envVarsMap.set("SPRKL_RECIPE", "commitsList");
         envVarsMap.set("SPRKL_COMMITS", commitsIdsArray.toString());
@@ -10969,13 +10965,6 @@ The available recipes are: ${POSSIBLE_INPUT_RECIPES}`);
         throw new Error(`The received recipe input: ${inputsObj.recipe} doesn't exist.
 The available recipes are: ${POSSIBLE_INPUT_RECIPES}`);
     }
-}
-function getPrNumber() {
-    const pullRequest = github.context.payload.pull_request;
-    if (!pullRequest) {
-        return undefined;
-    }
-    return pullRequest.number;
 }
 
 
