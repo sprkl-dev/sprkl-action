@@ -25,6 +25,10 @@ inputs:
     required: false
     description: "choose where to run sprkl analysis"
     default: ""
+  githubToken:
+    required: false
+    description: "The Github token - needed in order to fetch data about the Github events(Push, Pull Request...) from the Github API"
+    default: ${{ github.token }}
 
 runs:
   using: "node16"
